@@ -1,14 +1,13 @@
+# -*- coding: utf-8 -*-
 # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 import argparse
 import os
 import platform
 import sys
 from pathlib import Path
-
-import torch
+from os.path import exists
 import re
-import glob
-
+import torch
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -22,7 +21,6 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
-from iiif_downloader.src.iiif_downloader import IIIFDownloader
 
 
 @smart_inference_mode()
@@ -184,16 +182,6 @@ def run(
                         save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer[i].write(im0)
-
-        # Print time (inference-only)
-        LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
-
-    # Print results
-    t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
-    LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}' % t)
-    if save_txt or save_img:
-        s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
-        LOGGER.info(f"Results saved to {colorstr('bold', save_dir)}{s}")
     if update:
         strip_optimizer(weights[0])  # update model (to fix SourceChangeWarning)
 
@@ -207,22 +195,34 @@ if __name__ == "__main__":
     parser.add_argument('--sleep', type=int, default=0.5, help='Duration between two downloads')
     parser.add_argument('-o', '--output_dir', nargs='?', type=str, default='output', help='Path to the output directory name')
     parser.add_argument('-m', '--model', type=str, default="yolov5s.pt", help='Path to the model to perform detection (ends with .pt)')
+    parser.add_argument('-r', '--rerun', type=str, default=False, help='Re-detect already detected images?')
     args = parser.parse_args()
+
+    from iiif_downloader.src.iiif_downloader import IIIFDownloader
+    import glob
 
     with open(args.file, mode='r') as f:
         manifest_urls = f.read().splitlines()
     manifest_urls = list(filter(None, manifest_urls))
 
-    img_input_dir = 'img'
-    downloader = IIIFDownloader(manifest_urls, output_dir=img_input_dir, width=args.width, height=args.height,
-                                sleep=args.sleep)
+    img_input_dir = args.img_input_dir if args.img_input_dir is not None else 'img_input'
+    downloader = IIIFDownloader(manifest_urls, output_dir=img_input_dir, width=args.width, height=args.height, sleep=args.sleep)
     downloader.run()
 
-    output_dir = 'annotation'
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    output_dir = args.output_dir if args.output_dir is not None else 'output'
+    if not exists(ROOT / output_dir):
+        os.mkdir(ROOT / output_dir)
 
     for wit_dir in os.listdir(f'{img_input_dir}'):
-        for i, img in enumerate(sorted(glob.glob(f'{img_input_dir}/{wit_dir}/*')), 1):
-            wit_id = re.findall(r'\d+', img.split('/')[-1].split('_')[0])[0]
-            run(weights=args.model, source=Path(img), anno_file=f"{output_dir}/{wit_dir}.txt", img_nb=i)
+        wit_id = wit_dir.replace("ms", "")
+        if exists(f"{output_dir}/{wit_id}.txt") and args.rerun == False:
+            continue
+        LOGGER.info(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
+        wit_path = f'{ROOT}/{img_input_dir}/{wit_dir}'
+        for i, img in enumerate(sorted(os.listdir(wit_path))):
+            if args.rerun and exists(f"{output_dir}/{wit_id}.txt"):
+                # if annotation are generated again, empty annotation file
+                open(f"{output_dir}/{wit_id}.txt", 'w').close()
+
+            LOGGER.info(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
+            run(weights=args.model, source=Path(f"{wit_path}/{img}"), anno_file=f"{output_dir}/{wit_id}.txt", img_nb=i)
