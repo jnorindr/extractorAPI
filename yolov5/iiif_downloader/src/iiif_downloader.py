@@ -122,13 +122,6 @@ def get_json(url):
         return None
 
 
-def get_formatted_size(width="", height=""):
-    if not width and not height:
-        return "full"
-        # return "1500,"
-    return f"{width or ''},{height or ''}"
-
-
 def save_img(img: Image, img_filename, saving_dir, error_msg="Failed to save img"):
     try:
         img.save(saving_dir / img_filename)
@@ -191,37 +184,3 @@ class IIIFDownloader:
                 for rsrc in get_iiif_resources(manifest):
                     save_iiif_img(rsrc, i, manifest_id, output_path)
                     i += 1
-                    # img_id = f"{i:04d}"
-                    # # img_id = rsrc[0]
-                    # img_url = f"{rsrc[1]}/full/{self.size}/0/default.jpg"
-                    # i += 1
-                    
-                    # with requests.get(img_url, stream=True) as response:
-                    #     response.raw.decode_content = True
-                    #     output_file = output_path / f"{img_id}.jpg"
-                    #     console(f"Saving {output_file.relative_to(self.output_dir)}...")
-                    #     time.sleep(self.sleep)
-                    #     try:
-                    #         with open(output_file, mode="wb") as f:
-                    #             shutil.copyfileobj(response.raw, f)
-                    #     except Exception as e:
-                    #         console(f"{url} not working\n{e}", "error")
-
-
-# if __name__ == '__main__':
-#     parser = argparse.ArgumentParser(description='Download all image resources from a list of manifest urls')
-#     parser.add_argument('-f', '--file', nargs='?', type=str, required=True, help='File containing manifest urls')
-#     parser.add_argument('-o', '--output_dir', nargs='?', type=str, default='output_img', help='Output directory name')
-#     parser.add_argument('--width', type=int, default=None, help='Image width')
-#     parser.add_argument('--height', type=int, default=None, help='Image height')
-#     parser.add_argument('--sleep', type=int, default=0.5, help='Duration between two downloads')
-#     args = parser.parse_args()
-#
-#
-#     with open(args.file, mode='r') as f:
-#         manifest_urls = f.read().splitlines()
-#     manifest_urls = list(filter(None, manifest_urls))
-#
-#     output_dir = args.output_dir if args.output_dir is not None else 'output_img'
-#     downloader = IIIFDownloader(manifest_urls, output_dir=output_dir, width=args.width, height=args.height, sleep=args.sleep)
-#     downloader.run()
