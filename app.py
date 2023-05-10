@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import os
 import sys
 from pathlib import Path
@@ -38,14 +38,15 @@ def run_detect():
             continue
         LOGGER.info(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
         wit_path = f'{ROOT}/{img_dir}/{wit_dir}'
-        for i, img in enumerate(sorted(os.listdir(wit_path))):
+        for i, img in enumerate(sorted(os.listdir(wit_path)), 1):
             # if exists(f"{output_dir}/{wit_id}.txt"):
             #     # if annotation are generated again, empty annotation file
             #     open(f"{output_dir}/{wit_id}.txt", 'w').close()
 
             LOGGER.info(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
             run_vhs(weights=model, source=Path(f"{wit_path}/{img}"), anno_file=f"{output_dir}/{wit_id}.txt", img_nb=i)
-    return "Detecting....."
+
+    return jsonify({'success': True})
 
 
 if __name__ == '__main__':

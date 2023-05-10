@@ -174,20 +174,19 @@ class IIIFDownloader:
         self.sleep = sleep
 
     def run(self):
-        # for url in self.manifest_urls:
         manifest = get_json(self.manifest_url)
         if manifest is not None:
             manifest_id = get_manifest_id(manifest)
 
             if manifest_id is None:
                 console("Unable to retrieve manifest_id")
-                # continue
 
             console(f"Processing {manifest_id}...")
-            img_path = create_dir(
-                 self.img_dir / manifest_id
-             )
-            i = 1
-            for rsrc in get_iiif_resources(manifest):
-                save_iiif_img(rsrc, i, manifest_id, img_path)
-                i += 1
+            if not os.path.exists(self.img_dir / manifest_id):
+                img_path = create_dir(
+                     self.img_dir / manifest_id
+                 )
+                i = 1
+                for rsrc in get_iiif_resources(manifest):
+                    save_iiif_img(rsrc, i, manifest_id, img_path)
+                    i += 1
