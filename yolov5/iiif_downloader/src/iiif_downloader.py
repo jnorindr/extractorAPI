@@ -167,61 +167,27 @@ def save_iiif_img(img_rscr, i, work, output_dir, size="full", re_download=False)
 class IIIFDownloader:
     """Download all image resources from a list of manifest urls."""
 
-    def __init__(self, manifest_urls, output_dir, width=None, height=None, sleep=0.5):
-        self.manifest_urls = manifest_urls
-        self.output_dir = create_dir(output_dir)
+    def __init__(self, manifest_url, img_dir, width=None, height=None, sleep=0.5):
+        self.manifest_url = manifest_url
+        self.img_dir = create_dir(img_dir)
         self.size = get_formatted_size(width, height)
         self.sleep = sleep
 
     def run(self):
-        for url in self.manifest_urls:
-            manifest = get_json(url)
-            if manifest is not None:
-                manifest_id = get_manifest_id(manifest)
+        # for url in self.manifest_urls:
+        manifest = get_json(self.manifest_url)
+        if manifest is not None:
+            manifest_id = get_manifest_id(manifest)
 
-                if manifest_id is None:
-                    console("Unable to retrieve manifest_id")
-                    continue
+            if manifest_id is None:
+                console("Unable to retrieve manifest_id")
+                # continue
 
-                console(f"Processing {manifest_id}...")
-                output_path = create_dir(
-                     self.output_dir / manifest_id
-                 )
-                i = 1
-                for rsrc in get_iiif_resources(manifest):
-                    save_iiif_img(rsrc, i, manifest_id, output_path)
-                    i += 1
-                    # img_id = f"{i:04d}"
-                    # # img_id = rsrc[0]
-                    # img_url = f"{rsrc[1]}/full/{self.size}/0/default.jpg"
-                    # i += 1
-                    
-                    # with requests.get(img_url, stream=True) as response:
-                    #     response.raw.decode_content = True
-                    #     output_file = output_path / f"{img_id}.jpg"
-                    #     console(f"Saving {output_file.relative_to(self.output_dir)}...")
-                    #     time.sleep(self.sleep)
-                    #     try:
-                    #         with open(output_file, mode="wb") as f:
-                    #             shutil.copyfileobj(response.raw, f)
-                    #     except Exception as e:
-                    #         console(f"{url} not working\n{e}", "error")
-
-
-# if __name__ == '__main__':
-#     parser = argparse.ArgumentParser(description='Download all image resources from a list of manifest urls')
-#     parser.add_argument('-f', '--file', nargs='?', type=str, required=True, help='File containing manifest urls')
-#     parser.add_argument('-o', '--output_dir', nargs='?', type=str, default='output_img', help='Output directory name')
-#     parser.add_argument('--width', type=int, default=None, help='Image width')
-#     parser.add_argument('--height', type=int, default=None, help='Image height')
-#     parser.add_argument('--sleep', type=int, default=0.5, help='Duration between two downloads')
-#     args = parser.parse_args()
-#
-#
-#     with open(args.file, mode='r') as f:
-#         manifest_urls = f.read().splitlines()
-#     manifest_urls = list(filter(None, manifest_urls))
-#
-#     output_dir = args.output_dir if args.output_dir is not None else 'output_img'
-#     downloader = IIIFDownloader(manifest_urls, output_dir=output_dir, width=args.width, height=args.height, sleep=args.sleep)
-#     downloader.run()
+            console(f"Processing {manifest_id}...")
+            img_path = create_dir(
+                 self.img_dir / manifest_id
+             )
+            i = 1
+            for rsrc in get_iiif_resources(manifest):
+                save_iiif_img(rsrc, i, manifest_id, img_path)
+                i += 1

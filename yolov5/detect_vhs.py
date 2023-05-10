@@ -24,7 +24,7 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 
 @smart_inference_mode()
-def run(
+def run_vhs(
         weights=ROOT / 'yolov5s.pt',  # model path or triton URL
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         data=ROOT / 'data/coco128.yaml',  # dataset.yaml path
@@ -186,43 +186,42 @@ def run(
         strip_optimizer(weights[0])  # update model (to fix SourceChangeWarning)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Download all image resources from a list of manifest urls')
-    parser.add_argument('-f', '--file', nargs='?', type=str, required=True, help='File containing manifest urls')
-    parser.add_argument('-i', '--img_input_dir', nargs='?', type=str, default='input_img', help='Images input directory name')
-    parser.add_argument('--width', type=int, default=None, help='Image width')
-    parser.add_argument('--height', type=int, default=None, help='Image height')
-    parser.add_argument('--sleep', type=int, default=0.5, help='Duration between two downloads')
-    parser.add_argument('-o', '--output_dir', nargs='?', type=str, default='output', help='Path to the output directory name')
-    parser.add_argument('-m', '--model', type=str, default="yolov5s.pt", help='Path to the model to perform detection (ends with .pt)')
-    parser.add_argument('-r', '--rerun', type=str, default=False, help='Re-detect already detected images?')
-    args = parser.parse_args()
-
-    from iiif_downloader.src.iiif_downloader import IIIFDownloader
-    import glob
-
-    with open(args.file, mode='r') as f:
-        manifest_urls = f.read().splitlines()
-    manifest_urls = list(filter(None, manifest_urls))
-
-    img_input_dir = args.img_input_dir if args.img_input_dir is not None else 'img_input'
-    downloader = IIIFDownloader(manifest_urls, output_dir=img_input_dir, width=args.width, height=args.height, sleep=args.sleep)
-    downloader.run()
-
-    output_dir = args.output_dir if args.output_dir is not None else 'output'
-    if not exists(ROOT / output_dir):
-        os.mkdir(ROOT / output_dir)
-
-    for wit_dir in os.listdir(f'{img_input_dir}'):
-        wit_id = wit_dir.replace("ms", "")
-        if exists(f"{output_dir}/{wit_id}.txt") and args.rerun == False:
-            continue
-        LOGGER.info(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
-        wit_path = f'{ROOT}/{img_input_dir}/{wit_dir}'
-        for i, img in enumerate(sorted(os.listdir(wit_path))):
-            if args.rerun and exists(f"{output_dir}/{wit_id}.txt"):
-                # if annotation are generated again, empty annotation file
-                open(f"{output_dir}/{wit_id}.txt", 'w').close()
-
-            LOGGER.info(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
-            run(weights=args.model, source=Path(f"{wit_path}/{img}"), anno_file=f"{output_dir}/{wit_id}.txt", img_nb=i)
+# if __name__ == "__main__":
+#     parser = argparse.ArgumentParser(description='Download all image resources from a list of manifest urls')
+#     parser.add_argument('-f', '--file', nargs='?', type=str, required=True, help='File containing manifest urls')
+#     parser.add_argument('-i', '--img_input_dir', nargs='?', type=str, default='input_img', help='Images input directory name')
+#     parser.add_argument('--width', type=int, default=None, help='Image width')
+#     parser.add_argument('--height', type=int, default=None, help='Image height')
+#     parser.add_argument('--sleep', type=int, default=0.5, help='Duration between two downloads')
+#     parser.add_argument('-o', '--output_dir', nargs='?', type=str, default='output', help='Path to the output directory name')
+#     parser.add_argument('-m', '--model', type=str, default="yolov5s.pt", help='Path to the model to perform detection (ends with .pt)')
+#     parser.add_argument('-r', '--rerun', type=str, default=False, help='Re-detect already detected images?')
+#     args = parser.parse_args()
+#
+#     from iiif_downloader.src.iiif_downloader import IIIFDownloader
+#
+#     with open(args.file, mode='r') as f:
+#         manifest_urls = f.read().splitlines()
+#     manifest_urls = list(filter(None, manifest_urls))
+#
+#     img_input_dir = args.img_input_dir if args.img_input_dir is not None else 'img_input'
+#     downloader = IIIFDownloader(manifest_urls, output_dir=img_input_dir, width=args.width, height=args.height, sleep=args.sleep)
+#     downloader.run()
+#
+#     output_dir = args.output_dir if args.output_dir is not None else 'output'
+#     if not exists(ROOT / output_dir):
+#         os.mkdir(ROOT / output_dir)
+#
+#     for wit_dir in os.listdir(f'{img_input_dir}'):
+#         wit_id = wit_dir.replace("ms", "")
+#         if exists(f"{output_dir}/{wit_id}.txt") and args.rerun == False:
+#             continue
+#         LOGGER.info(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
+#         wit_path = f'{ROOT}/{img_input_dir}/{wit_dir}'
+#         for i, img in enumerate(sorted(os.listdir(wit_path))):
+#             if args.rerun and exists(f"{output_dir}/{wit_id}.txt"):
+#                 # if annotation are generated again, empty annotation file
+#                 open(f"{output_dir}/{wit_id}.txt", 'w').close()
+#
+#             LOGGER.info(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
+#             run_detect(weights=args.model, source=Path(f"{wit_path}/{img}"), anno_file=f"{output_dir}/{wit_id}.txt", img_nb=i)
