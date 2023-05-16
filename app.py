@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from os.path import exists
 
+from utils.hosts_utils import allow_hosts
 from yolov5.utils.general import LOGGER, cv2
 from yolov5.iiif_downloader.src.iiif_downloader import IIIFDownloader
 from yolov5.detect_vhs import run_vhs
@@ -19,6 +20,7 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 
 @app.route('/run_detect', methods=['POST'])
+@allow_hosts
 def run_detect():
     # Get manifest URL from the request form
     manifest_url = request.form['manifest_url']
