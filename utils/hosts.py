@@ -1,10 +1,9 @@
 import os
-import environ
 from flask import request
+from dotenv import load_dotenv
 
-allowed_hosts = ['obspm.fr']
-env = environ.Env()
-environ.env.readenv
+load_dotenv()
+allowed_hosts = os.getenv("ALLOWED_HOSTS")
 
 
 def allow_hosts(func):
