@@ -122,13 +122,6 @@ def get_json(url):
         return None
 
 
-def get_formatted_size(width="", height=""):
-    if not width and not height:
-        return "full"
-        # return "1500,"
-    return f"{width or ''},{height or ''}"
-
-
 def save_img(img: Image, img_filename, saving_dir, error_msg="Failed to save img"):
     try:
         img.save(saving_dir / img_filename)
