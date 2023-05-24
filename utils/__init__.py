@@ -1,11 +1,9 @@
+import json
 from functools import wraps
 from pathlib import Path
+from utils.logger import log
 
-def check_dir(path):
-    path = Path(path)
-    if not path.exists():
-        raise FileNotFoundError('{} does not exist'.format(path.absolute()))
-    return path
+import requests
 
 
 def create_dir(path):
@@ -14,17 +12,33 @@ def create_dir(path):
     return path
 
 
-def get_files_from_dir(dir_path, valid_extensions=None, recursive=False, sort=False):
-    path = coerce_to_path_and_check_exist(dir_path)
-    if recursive:
-        files = [f.absolute() for f in path.glob('**/*') if f.is_file()]
+def check_if_dir_exists(path):
+    path = Path(path)
+    if not path.exists():
+        create_dir(path)
+        return False
+    return True
+
+
+def get_json(url):
+    try:
+        response = requests.get(url)
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        log(e)
+        return None
+
+
+def pprint(o):
+    if type(o) == str:
+        try:
+            return json.dumps(json.loads(o), indent=4, sort_keys=True)
+        except ValueError:
+            return o
+    elif type(o) == dict or type(o) == list:
+        return json.dumps(o, indent=4, sort_keys=True)
     else:
-        files = [f.absolute() for f in path.glob('*') if f.is_file()]
-
-    if valid_extensions is not None:
-        valid_extensions = [valid_extensions] if isinstance(valid_extensions, str) else valid_extensions
-        valid_extensions = ['.{}'.format(ext) if not ext.startswith('.') else ext for ext in valid_extensions]
-        files = list(filter(lambda f: f.suffix in valid_extensions, files))
-
-    return sorted(files) if sort else files
-
+        return str(o)

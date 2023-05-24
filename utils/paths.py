@@ -1,3 +1,4 @@
+import environ
 from pathlib import Path
 
 FILE = Path(__file__).resolve()
@@ -14,3 +15,6 @@ ANNO_PATH = f"{API_ROOT}/{ANNO_DIR}"
 MODEL_PATH = f"{API_ROOT}/{YOLO_DIR}/best.pt"
 MANIFESTS_PATH = f"{API_ROOT}/{MANIFESTS_DIR}"
 LOG_PATH = f"{API_ROOT}/{LOG_DIR}/api_logs.log"
+
+ENV = environ.Env()
+environ.Env.read_env(env_file=f"{API_ROOT}/.env")

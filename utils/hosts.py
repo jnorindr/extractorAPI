@@ -1,10 +1,7 @@
-import environ
 from flask import request
+from utils.paths import ENV
 
-from utils.paths import API_ROOT
 
-ENV = environ.Env()
-environ.Env.read_env(env_file=f"{API_ROOT}/.env")
 ALLOWED_HOSTS = ENV.list("ALLOWED_HOSTS")
 
 
