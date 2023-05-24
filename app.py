@@ -9,7 +9,7 @@ from utils.hosts import allow_hosts
 from utils.logger import log
 from utils.celery_utils import get_celery_app_instance
 
-from yolov5.iiif_downloader.src.iiif_downloader import IIIFDownloader
+from iiif.iiif_downloader import IIIFDownloader
 from yolov5.detect_vhs import run_vhs
 
 app = Flask(__name__)

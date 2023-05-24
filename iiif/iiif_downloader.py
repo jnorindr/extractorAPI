@@ -4,8 +4,8 @@ from PIL import Image, UnidentifiedImageError
 import requests
 from urllib.parse import urlparse
 
-from ..src.utils import create_dir
-from ..src.utils.logger import console, log
+from utils import create_dir
+from utils.logger import console, log
 
 
 def get_id(dic):
