@@ -29,6 +29,13 @@ sudo systemctl start redis && celery -A app.celery worker -c 1 --loglevel=info &
 ```
 
 ## Launch annotation
+
+One manifest:
 ```shell
 curl -X POST -F manifest_url='<url-manifest>' http://127.0.0.1:5000/run_detect
+```
+
+Manifest list in a text file:
+```shell
+curl -X POST -F url_file=@iiif/test-manifests.txt http://127.0.0.1:5000/detect_all
 ```

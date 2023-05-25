@@ -3,7 +3,7 @@ import os
 import time
 
 from utils.paths import ENV, LOG_PATH
-from utils import pprint
+from utils import pprint, check_and_create_if_not
 
 DEBUG = ENV.list("DEBUG")
 
@@ -59,9 +59,7 @@ def log(msg, color=TerminalColors.OKBLUE):
         # trace = traceback.extract_stack(limit=10)
         trace = ""
 
-    if not os.path.isfile(LOG_PATH):
-        f = open(LOG_PATH, "x")
-        f.close()
+    check_and_create_if_not(LOG_PATH)
 
     # Create a logger instance
     logger = logging.getLogger("django")

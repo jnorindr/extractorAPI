@@ -1,9 +1,5 @@
 import json
-from functools import wraps
 from pathlib import Path
-from utils.logger import log
-
-import requests
 
 
 def create_dir(path):
@@ -12,24 +8,12 @@ def create_dir(path):
     return path
 
 
-def check_if_dir_exists(path):
+def check_and_create_if_not(path):
     path = Path(path)
     if not path.exists():
         create_dir(path)
         return False
     return True
-
-
-def get_json(url):
-    try:
-        response = requests.get(url)
-        if response.ok:
-            return response.json()
-        else:
-            response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        log(e)
-        return None
 
 
 def pprint(o):
