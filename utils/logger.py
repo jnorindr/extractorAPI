@@ -63,4 +63,4 @@ def log(msg, color=TerminalColors.OKBLUE):
 
     # Create a logger instance
     logger = logging.getLogger("django")
-    logger.error(f"\n{pprint(msg)}{trace}\n")
+    logger.error(f"\n{pprint(msg)}\n{trace}\n")

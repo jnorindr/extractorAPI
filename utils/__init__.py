@@ -16,6 +16,10 @@ def check_and_create_if_not(path):
     return True
 
 
+def sanitize_str(string):
+    return string.replace("/", "").replace(".", "").replace("https:", "").replace("www", "")
+
+
 def pprint(o):
     if type(o) == str:
         try:

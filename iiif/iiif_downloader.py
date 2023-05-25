@@ -1,3 +1,4 @@
+import glob
 import os
 import time
 from pathlib import Path
@@ -7,7 +8,7 @@ from PIL import Image, UnidentifiedImageError
 import requests
 from urllib.parse import urlparse, quote
 
-from utils import check_and_create_if_not
+from utils import check_and_create_if_not, sanitize_str
 from utils.logger import console, log
 from utils.paths import IMG_PATH
 
@@ -69,9 +70,10 @@ def get_manifest_id(manifest):
             manifest_id = Path(urlparse(get_id(manifest)).path).parent.name
             if "manifest" in manifest_id:
                 return uuid4().hex
+            return sanitize_str(manifest_id)
         except Exception:
             return uuid4().hex
-    return manifest_id.split("/")[-1]
+    return sanitize_str(manifest_id.split("/")[-1])
 
 
 def get_iiif_resources(manifest, only_img_url=False):
@@ -135,7 +137,7 @@ class IIIFDownloader:
         self.max_dim = max_dim  # Maximal height in px
 
     def get_dir_name(self):
-        return self.manifest_url.replace("/", "").replace(".", "").replace("https:", "").replace("www", "").replace("manifest", "").replace("json", "")
+        return sanitize_str(self.manifest_url).replace("manifest", "").replace("json", "")
 
     def run(self):
         manifest = get_json(self.manifest_url)
@@ -145,8 +147,8 @@ class IIIFDownloader:
             if not check_and_create_if_not(self.manifest_dir_path):
                 i = 1
                 for rsrc in get_iiif_resources(manifest):
-                    if i > 7:  # TODO to remove
-                        break
+                    # if i > 7:  # TODO to remove
+                    #     break
                     is_downloaded = self.save_iiif_img(rsrc, i)
                     i += 1
                     if is_downloaded:
@@ -176,7 +178,7 @@ class IIIFDownloader:
     def save_iiif_img(self, img_rscr, i, size="full", re_download=False):
         img_name = f"{self.manifest_id}_{i:04d}.jpg"
 
-        if os.path.isfile(self.manifest_dir_path / img_name) and not re_download:
+        if glob.glob(os.path.join(self.manifest_dir_path, f"*_{i:04d}.jpg")) and not re_download:
             # if the img is already downloaded, don't download it again
             return False
 
@@ -184,7 +186,6 @@ class IIIFDownloader:
         iiif_url = quote(f"{img_url}/full/{size}/0/default.jpg")
 
         with requests.get(iiif_url, stream=True) as response:
-            console(iiif_url)
             response.raw.decode_content = True
             try:
                 img = Image.open(response.raw)
@@ -194,10 +195,10 @@ class IIIFDownloader:
                     self.save_iiif_img(img_rscr, i, self.get_formatted_size(size))
                     return
                 else:
-                    log(f"Failed to extract image from {img_url}")
+                    log(f"Failed to extract image from {iiif_url}")
                     return
 
-            self.save_img(img, img_name, f"Failed to save {img_url}")
+            self.save_img(img, img_name, f"Failed to save {iiif_url}")
         return True
 
     def save_img(self, img: Image, img_filename, error_msg="Failed to save img"):
