@@ -136,7 +136,8 @@ class IIIFDownloader:
                     is_downloaded = self.save_iiif_img(rsrc, i)
                     i += 1
                     if is_downloaded:
-                        # time.sleep(5 if "gallica" in self.manifest_url else 0.25)
+                        # Gallica is not accepting more than 5 downloads of >1000px / min after
+                        time.sleep(12 if "gallica" in self.manifest_url else 0.25)
                         time.sleep(self.sleep)
 
     def get_formatted_size(self, width="", height=""):
@@ -146,11 +147,12 @@ class IIIFDownloader:
         if not width and not height:
             if self.max_dim is not None:
                 return f",{self.max_dim}"
-            return "pct:99" if "gallica" in self.manifest_url else "full"
+            # return "pct:99" if "gallica" in self.manifest_url else "full"
+            return "full"
 
-        if "gallica" in self.manifest_url:
-            # Gallica is not accepting more than 5 downloads of >1000px / min
-            return "pct:60"
+        # if "gallica" in self.manifest_url:
+        #     # Gallica is not accepting more than 5 downloads of >1000px / min
+        #     return ",1000"
 
         if self.max_dim is not None and int(width) > self.max_dim:
             width = f"{self.max_dim}"
