@@ -2,11 +2,10 @@ import glob
 import os
 import time
 from pathlib import Path
-from uuid import uuid4
 
 from PIL import Image, UnidentifiedImageError
 import requests
-from urllib.parse import urlparse, quote
+from urllib.parse import urlparse
 
 from utils import check_and_create_if_not, sanitize_str, sanitize_url
 from utils.logger import console, log
@@ -132,8 +131,8 @@ class IIIFDownloader:
             if not check_and_create_if_not(self.manifest_dir_path):
                 i = 1
                 for rsrc in get_iiif_resources(manifest):
-                    if i > 7:  # TODO to remove
-                        break
+                    # if i > 7:  # TODO to remove
+                    #     break
                     is_downloaded = self.save_iiif_img(rsrc, i)
                     i += 1
                     if is_downloaded:
