@@ -8,7 +8,7 @@ from PIL import Image, UnidentifiedImageError
 import requests
 from urllib.parse import urlparse, quote
 
-from utils import check_and_create_if_not, sanitize_str
+from utils import check_and_create_if_not, sanitize_str, sanitize_url
 from utils.logger import console, log
 from utils.paths import IMG_PATH
 
@@ -59,21 +59,6 @@ def get_img_id(img):
             return None
         # return Path(urlparse(img_id).path).parts[-5]
     return img_id.split("/")[-1]
-
-
-def get_manifest_id(manifest):
-    manifest_id = get_id(manifest)
-    if manifest_id is None:
-        return uuid4().hex
-    if "manifest" in manifest_id:
-        try:
-            manifest_id = Path(urlparse(get_id(manifest)).path).parent.name
-            if "manifest" in manifest_id:
-                return uuid4().hex
-            return sanitize_str(manifest_id)
-        except Exception:
-            return uuid4().hex
-    return sanitize_str(manifest_id.split("/")[-1])
 
 
 def get_iiif_resources(manifest, only_img_url=False):
@@ -141,14 +126,14 @@ class IIIFDownloader:
 
     def run(self):
         manifest = get_json(self.manifest_url)
-        self.manifest_id = get_manifest_id(manifest)
+        self.manifest_id = self.get_manifest_id(manifest)
         if manifest is not None:
             console(f"Processing {self.manifest_url}...")
             if not check_and_create_if_not(self.manifest_dir_path):
                 i = 1
                 for rsrc in get_iiif_resources(manifest):
-                    # if i > 7:  # TODO to remove
-                    #     break
+                    if i > 7:  # TODO to remove
+                        break
                     is_downloaded = self.save_iiif_img(rsrc, i)
                     i += 1
                     if is_downloaded:
@@ -183,7 +168,7 @@ class IIIFDownloader:
             return False
 
         img_url = get_id(img_rscr["service"])
-        iiif_url = quote(f"{img_url}/full/{size}/0/default.jpg")
+        iiif_url = sanitize_url(f"{img_url}/full/{size}/0/default.jpg")
 
         with requests.get(iiif_url, stream=True) as response:
             response.raw.decode_content = True
@@ -206,3 +191,17 @@ class IIIFDownloader:
             img.save(self.manifest_dir_path / img_filename)
         except Exception as e:
             log(f"{error_msg}:\n{e}")
+
+    def get_manifest_id(self, manifest):
+        manifest_id = get_id(manifest)
+        if manifest_id is None:
+            return self.get_dir_name()
+        if "manifest" in manifest_id:
+            try:
+                manifest_id = Path(urlparse(get_id(manifest)).path).parent.name
+                if "manifest" in manifest_id:
+                    return self.get_dir_name()
+                return sanitize_str(manifest_id)
+            except Exception:
+                return self.get_dir_name()
+        return sanitize_str(manifest_id.split("/")[-1])

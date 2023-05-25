@@ -16,8 +16,12 @@ def check_and_create_if_not(path):
     return True
 
 
+def sanitize_url(string):
+    return string.replace(" ", "+").replace(" ", "+")
+
+
 def sanitize_str(string):
-    return string.replace("/", "").replace(".", "").replace("https:", "").replace("www", "")
+    return string.replace("/", "").replace(".", "").replace("https:", "").replace("www", "").replace(" ", "_")
 
 
 def pprint(o):

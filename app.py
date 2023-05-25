@@ -25,21 +25,21 @@ def detect(manifest_url):
     wit_id = downloader.get_dir_name()
     anno_id = downloader.manifest_id.replace("ms", "").replace("-", "")
 
-    # Directory in which to save annotation files
-    if not exists(ANNO_PATH):
-        os.mkdir(ANNO_PATH)
-
-    # If annotations are generated again, empty annotation file
-    if exists(f"{ANNO_DIR}/{anno_id}.txt"):
-        open(f"{ANNO_DIR}/{anno_id}.txt", 'w').close()
-
-    log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
-    wit_path = downloader.manifest_dir_path
-
-    # For number and images in the witness images directory, run detection
-    for i, img in enumerate(sorted(os.listdir(wit_path)), 1):
-        log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
-        run_vhs(weights=MODEL_PATH, source=wit_path / img, anno_file=f"{ANNO_DIR}/{anno_id}.txt", img_nb=i)
+    # # Directory in which to save annotation files
+    # if not exists(ANNO_PATH):
+    #     os.mkdir(ANNO_PATH)
+    #
+    # # If annotations are generated again, empty annotation file
+    # if exists(f"{ANNO_DIR}/{anno_id}.txt"):
+    #     open(f"{ANNO_DIR}/{anno_id}.txt", 'w').close()
+    #
+    # log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
+    # wit_path = downloader.manifest_dir_path
+    #
+    # # For number and images in the witness images directory, run detection
+    # for i, img in enumerate(sorted(os.listdir(wit_path)), 1):
+    #     log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
+    #     run_vhs(weights=MODEL_PATH, source=wit_path / img, anno_file=f"{ANNO_DIR}/{anno_id}.txt", img_nb=i)
 
     return 'Success'
 
