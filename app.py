@@ -4,12 +4,12 @@ from pathlib import Path
 
 from os.path import exists
 
-from utils.paths import ANNO_DIR, IMG_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, MANIFESTS_PATH
+from utils.paths import ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, MANIFESTS_PATH
 from utils.hosts import allow_hosts
 from utils.logger import log
 from utils.celery_utils import get_celery_app_instance
 
-from yolov5.iiif_downloader.src.iiif_downloader import IIIFDownloader
+from iiif.iiif_downloader import IIIFDownloader
 from yolov5.detect_vhs import run_vhs
 
 app = Flask(__name__)
@@ -18,13 +18,12 @@ celery = get_celery_app_instance(app)
 
 @celery.task
 def detect(manifest_url):
-    # Create witness id from URL
-    wit_id = manifest_url.split('/')[-2]
-    anno_id = manifest_url.split('/')[-2].replace("ms", "").replace("-", "")
-
     # Save images from IIIF manifest
-    downloader = IIIFDownloader(manifest_url, img_dir=IMG_DIR)
+    downloader = IIIFDownloader(manifest_url)
     downloader.run()
+
+    wit_id = downloader.get_dir_name()
+    anno_id = downloader.manifest_id.replace("ms", "").replace("-", "")
 
     # Directory in which to save annotation files
     if not exists(ANNO_PATH):
@@ -35,12 +34,12 @@ def detect(manifest_url):
         open(f"{ANNO_DIR}/{anno_id}.txt", 'w').close()
 
     log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
-    wit_path = f'{IMG_PATH}/{wit_id}'
+    wit_path = downloader.manifest_dir_path
 
     # For number and images in the witness images directory, run detection
     for i, img in enumerate(sorted(os.listdir(wit_path)), 1):
         log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
-        run_vhs(weights=MODEL_PATH, source=Path(f"{wit_path}/{img}"), anno_file=f"{ANNO_DIR}/{anno_id}.txt", img_nb=i)
+        run_vhs(weights=MODEL_PATH, source=wit_path / img, anno_file=f"{ANNO_DIR}/{anno_id}.txt", img_nb=i)
 
     return 'Success'
 

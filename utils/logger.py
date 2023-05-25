@@ -1,14 +1,11 @@
-import json
 import logging
 import os
 import time
-import environ
 
-from utils.paths import API_ROOT, LOG_PATH
+from utils.paths import ENV, LOG_PATH
+from utils import pprint, check_and_create_if_not
 
-ENV = environ.Env()
-environ.Env.read_env(env_file=f"{API_ROOT}/.env")
-DEBUG = ENV.bool("DEBUG")
+DEBUG = ENV.list("DEBUG")
 
 
 class TerminalColors:
@@ -34,40 +31,6 @@ def get_color(msg_type=None):
     return TerminalColors.OKBLUE
 
 
-def log(msg):
-    """
-    Record an error message in the system log
-    """
-    import logging
-    import traceback
-
-    trace = traceback.format_exc()
-    if trace == "NoneType: None\n":
-        # trace = traceback.extract_stack(limit=10)
-        trace = ""
-
-    if not os.path.isfile(LOG_PATH):
-        f = open(LOG_PATH, "x")
-        f.close()
-
-    # Create a logger instance
-    logger = logging.getLogger("django")
-    # get_time() is already printed by the logger object
-    logger.error(f"\n{pprint(msg)}{trace}\n")
-
-
-def pprint(o):
-    if type(o) == str:
-        try:
-            return json.dumps(json.loads(o), indent=4, sort_keys=True)
-        except ValueError:
-            return o
-    elif type(o) == dict or type(o) == list:
-        return json.dumps(o, indent=4, sort_keys=True)
-    else:
-        return str(o)
-
-
 def console(msg="🚨🚨🚨", msg_type=None):
     msg = f"\n\n\n{get_time()}\n{get_color(msg_type)}{TerminalColors.BOLD}{pprint(msg)}{TerminalColors.ENDC}\n\n\n"
 
@@ -82,3 +45,22 @@ def console(msg="🚨🚨🚨", msg_type=None):
         logger.warning(msg)
     else:
         logger.info(msg)
+
+
+def log(msg, color=TerminalColors.OKBLUE):
+    """
+    Record an error message in the system log
+    """
+    import logging
+    import traceback
+
+    trace = traceback.format_exc()
+    if trace == "NoneType: None\n":
+        # trace = traceback.extract_stack(limit=10)
+        trace = ""
+
+    check_and_create_if_not(LOG_PATH)
+
+    # Create a logger instance
+    logger = logging.getLogger("django")
+    logger.error(f"\n{pprint(msg)}\n{trace}\n")
