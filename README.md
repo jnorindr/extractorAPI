@@ -25,7 +25,10 @@ cp .env{.template,}
 
 ## Run the application
 ```shell
-sudo systemctl start redis && celery -A app.celery worker -c 1 --loglevel=info && FLASK_ENV=development FLASK_APP=app.py flask run
+sudo systemctl start redis && celery -A app.celery worker -c 1 --loglevel=info
+```
+```shell
+FLASK_ENV=development FLASK_APP=app.py flask run
 ```
 
 ## Launch annotation

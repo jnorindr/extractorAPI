@@ -175,13 +175,22 @@ class IIIFDownloader:
             response.raw.decode_content = True
             try:
                 img = Image.open(response.raw)
-            except UnidentifiedImageError:
-                if size == "full" or size == "pct:99":
+                img.verify()
+            except (UnidentifiedImageError, SyntaxError) as e:
+                if size == "full":
                     size = get_reduced_size(img_rscr["width"])
                     self.save_iiif_img(img_rscr, i, self.get_formatted_size(size))
                     return
                 else:
-                    log(f"Failed to extract image from {iiif_url}")
+                    log(f"{iiif_url} is not a valid img file: {e}")
+                    return
+            except (IOError, OSError) as e:
+                if size == "full":
+                    size = get_reduced_size(img_rscr["width"])
+                    self.save_iiif_img(img_rscr, i, self.get_formatted_size(size))
+                    return
+                else:
+                    log(f"{iiif_url} is a truncated or corrupted image: {e}")
                     return
 
             self.save_img(img, img_name, f"Failed to save {iiif_url}")
@@ -190,8 +199,10 @@ class IIIFDownloader:
     def save_img(self, img: Image, img_filename, error_msg="Failed to save img"):
         try:
             img.save(self.manifest_dir_path / img_filename)
+            return True
         except Exception as e:
             log(f"{error_msg}:\n{e}")
+        return False
 
     def get_manifest_id(self, manifest):
         manifest_id = get_id(manifest)
