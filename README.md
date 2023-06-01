@@ -36,7 +36,7 @@ ALLOWED_HOSTS="<host1>,<host2>"
 CELERY_BROKER_URL="redis://<localhost-port>"
 DEBUG=True
 ```
-## Run the application :rocket:
+## Run the application 
 Start Redis and Celery
 ```shell
 sudo systemctl start redis && celery -A app.celery worker -B -c 1 --loglevel=info
@@ -44,7 +44,7 @@ sudo systemctl start redis && celery -A app.celery worker -B -c 1 --loglevel=inf
 ```shell
 FLASK_ENV=development FLASK_APP=app.py flask run
 ```
-## Launch annotation
+## Launch annotation :rocket:
 One manifest
 ```shell
 curl -X POST -F manifest_url='<url-manifest>' http://127.0.0.1:5000/run_detect
