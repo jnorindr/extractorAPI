@@ -1,44 +1,55 @@
 # Extractor API
 
-> API that does blablabli
+API to run inference on a GPU using a model for element extraction. 
 
-## Requirements
+extractorAPI retreives images from a IIIF manifest or a list of manifests and uses a vision model to extract objects from images and return annotations in txt files. 
 
-> Pre-requirements: sudo privileges, git, Python 3.10
+## Requirements :hammer_and_wrench:
 
-System dependencies
+> - **Sudo** privileges
+> - **Git**
+> - **Python:** 3.10
+
+#### System dependencies
 ```shell
 sudo apt-get install redis-server python3-venv python3-dev
 ```
-
-Python dependencies
+#### Repository
 ```shell
-python3 -m venv venv
+git clone https://github.com/jnorindr/extractorAPI
+cd extractorAPI
+```
+#### Python dependencies
+```shell
+python3.10 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-
-Setting the environment variables
+#### Setting the environment variables
+Copy the content of the template file
 ```bash
 cp .env{.template,}
 ```
-
-## Run the application
+Change the content according to your host restrictions and Celery backend
+```
+ALLOWED_HOSTS="<host1>,<host2>"
+CELERY_BROKER_URL="redis://<localhost-port>"
+DEBUG=True
+```
+## Run the application :rocket:
+Start Redis and Celery
 ```shell
 sudo systemctl start redis && celery -A app.celery worker -c 1 --loglevel=info
 ```
 ```shell
 FLASK_ENV=development FLASK_APP=app.py flask run
 ```
-
 ## Launch annotation
-
-One manifest:
+One manifest
 ```shell
 curl -X POST -F manifest_url='<url-manifest>' http://127.0.0.1:5000/run_detect
 ```
-
-Manifest list in a text file:
+Manifest list in a text file
 ```shell
 curl -X POST -F url_file=@iiif/test-manifests.txt http://127.0.0.1:5000/detect_all
 ```
