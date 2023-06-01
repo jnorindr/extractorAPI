@@ -162,7 +162,10 @@ class IIIFDownloader:
         return f"{width or ''},{height or ''}"
 
     def save_iiif_img(self, img_rscr, i, size="full", re_download=False):
-        img_name = f"{self.manifest_id}_{i:04d}.jpg"
+        if "-" in self.manifest_id:
+            img_name = f"{self.manifest_id.replace('-', '')}_{i:04d}.jpg"
+        else:
+            img_name = f"{self.manifest_id}_{i:04d}.jpg"
 
         if glob.glob(os.path.join(self.manifest_dir_path, f"*_{i:04d}.jpg")) and not re_download:
             # if the img is already downloaded, don't download it again
@@ -175,7 +178,7 @@ class IIIFDownloader:
             response.raw.decode_content = True
             try:
                 img = Image.open(response.raw)
-                img.verify()
+                # img.verify()
             except (UnidentifiedImageError, SyntaxError) as e:
                 if size == "full":
                     size = get_reduced_size(img_rscr["width"])

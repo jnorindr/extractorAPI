@@ -1,7 +1,9 @@
 venv/
+env/
 .env
 .idea/
 __pycache__/
 img/*
 annotation/*
 manifests/*
+logs/*
