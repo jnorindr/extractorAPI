@@ -1,6 +1,7 @@
 from flask import Flask, request
 import os
-from pathlib import Path
+from datetime import datetime, timedelta
+from celery.schedules import crontab
 
 from os.path import exists
 
@@ -42,6 +43,29 @@ def detect(manifest_url):
         run_vhs(weights=MODEL_PATH, source=wit_path / img, anno_file=f"{ANNO_DIR}/{anno_id}.txt", img_nb=i)
 
     return 'Success'
+
+
+@celery.task
+def delete_images():
+    week_ago = datetime.now() - timedelta(days=7)
+    for ms_dir in os.listdir(IMG_PATH):
+        for img in os.listdir(IMG_PATH / ms_dir):
+            filepath = os.path.join(IMG_PATH, ms_dir, img)
+            print(filepath)
+            if os.path.isfile(filepath):
+                file_modified_time = datetime.fromtimestamp(os.path.getmtime(filepath))
+                if file_modified_time < week_ago:
+                    os.remove(filepath)
+        if not os.path.isfile(IMG_PATH / ms_dir):
+            os.rmdir(IMG_PATH / ms_dir)
+
+
+@celery.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(
+        crontab(hour=2, minute=0),
+        delete_images.s()
+    )
 
 
 @app.route('/detect_all', methods=['POST'])

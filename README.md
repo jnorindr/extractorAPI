@@ -39,7 +39,7 @@ DEBUG=True
 ## Run the application :rocket:
 Start Redis and Celery
 ```shell
-sudo systemctl start redis && celery -A app.celery worker -c 1 --loglevel=info
+sudo systemctl start redis && celery -A app.celery worker -B -c 1 --loglevel=info
 ```
 ```shell
 FLASK_ENV=development FLASK_APP=app.py flask run
