@@ -62,13 +62,12 @@ def delete_images():
     for ms_dir in os.listdir(IMG_PATH):
         for img in os.listdir(IMG_PATH / ms_dir):
             filepath = os.path.join(IMG_PATH, ms_dir, img)
-            print(filepath)
             if os.path.isfile(filepath):
                 file_modified_time = datetime.fromtimestamp(os.path.getmtime(filepath))
                 if file_modified_time < week_ago:
                     os.remove(filepath)
-        if not os.path.isfile(IMG_PATH / ms_dir):
-            os.rmdir(IMG_PATH / ms_dir)
+            if not os.path.isfile(IMG_PATH / ms_dir):
+                os.rmdir(IMG_PATH / ms_dir)
 
 
 @celery.on_after_configure.connect
