@@ -53,3 +53,10 @@ Manifest list in a text file
 ```shell
 curl -X POST -F url_file=@iiif/test-manifests.txt http://127.0.0.1:5000/detect_all
 ```
+To use a different model from the default model
+```shell
+curl -X POST -F manifest_url='<url-manifest>' model='<filename>' http://127.0.0.1:5000/run_detect
+```
+```shell
+curl -X POST -F url_file=@iiif/test-manifests.txt model='<filename>' http://127.0.0.1:5000/detect_all
+```
