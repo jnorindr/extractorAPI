@@ -2,6 +2,7 @@ from flask import Flask, request
 import os
 from datetime import datetime, timedelta
 from celery.schedules import crontab
+import shutil
 
 from os.path import exists
 
@@ -49,15 +50,11 @@ def detect(manifest_url):
 def delete_images():
     week_ago = datetime.now() - timedelta(days=7)
     for ms_dir in os.listdir(IMG_PATH):
-        for img in os.listdir(IMG_PATH / ms_dir):
-            filepath = os.path.join(IMG_PATH, ms_dir, img)
-            print(filepath)
-            if os.path.isfile(filepath):
-                file_modified_time = datetime.fromtimestamp(os.path.getmtime(filepath))
-                if file_modified_time < week_ago:
-                    os.remove(filepath)
-        if not os.path.isfile(IMG_PATH / ms_dir):
-            os.rmdir(IMG_PATH / ms_dir)
+        dir_path = os.path.join(IMG_PATH, ms_dir)
+        if os.path.isdir(dir_path):
+            dir_modified_time = datetime.fromtimestamp(os.path.getmtime(dir_path))
+            if dir_modified_time < week_ago:
+                shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
 
 
 @celery.on_after_configure.connect
