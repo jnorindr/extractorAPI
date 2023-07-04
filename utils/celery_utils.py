@@ -1,7 +1,8 @@
 from celery import Celery
+from utils.paths import ENV
 
-CELERY_BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_BROKER_URL = ENV.str("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = ENV.str("CELERY_BROKER_URL")
 
 
 def get_celery_app_instance(app):

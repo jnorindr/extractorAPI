@@ -3,6 +3,7 @@ from utils.paths import ENV
 
 
 ALLOWED_HOSTS = ENV.list("ALLOWED_HOSTS")
+# TODO: add host restriction
 
 
 def allow_hosts(func):
