@@ -79,7 +79,7 @@ def setup_periodic_tasks(sender, **kwargs):
 
 
 @app.route('/detect_all', methods=['POST'])
-@allow_hosts
+# @allow_hosts
 def detect_all():
     # Get manifest URL file from the request
     url_file = request.files['url_file']
@@ -103,7 +103,7 @@ def detect_all():
 
 
 @app.route("/run_detect", methods=['POST'])
-@allow_hosts
+# @allow_hosts
 def run_detect():
     # Get manifest URL from the request form
     manifest_url = request.form['manifest_url']

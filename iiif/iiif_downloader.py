@@ -114,7 +114,7 @@ class IIIFDownloader:
 
     def __init__(self, manifest_url, img_dir=IMG_PATH, width=None, height=None, sleep=0.25, max_dim=None):
         self.manifest_url = manifest_url
-        self.manifest_id = ""  # Prefix to be used for img filenames
+        self.manifest_id = "ms" if "manuscript" in manifest_url else "vol" if "volume" in manifest_url else "" # Prefix to be used for img filenames
         self.manifest_dir_path = img_dir / self.get_dir_name()
         self.size = self.get_formatted_size(width, height)
         self.sleep = sleep
@@ -125,7 +125,7 @@ class IIIFDownloader:
 
     def run(self):
         manifest = get_json(self.manifest_url)
-        self.manifest_id = self.get_manifest_id(manifest)
+        self.manifest_id = self.manifest_id + self.get_manifest_id(manifest)
         if manifest is not None:
             console(f"Processing {self.manifest_url}...")
             if not check_and_create_if_not(self.manifest_dir_path):
