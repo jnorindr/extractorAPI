@@ -114,7 +114,7 @@ class IIIFDownloader:
 
     def __init__(self, manifest_url, img_dir=IMG_PATH, width=None, height=None, sleep=0.25, max_dim=None):
         self.manifest_url = manifest_url
-        self.manifest_id = "ms" if "manuscript" in manifest_url else "vol" if "volume" in manifest_url else "" # Prefix to be used for img filenames
+        self.manifest_id = "" # Prefix to be used for img filenames
         self.manifest_dir_path = img_dir / self.get_dir_name()
         self.size = self.get_formatted_size(width, height)
         self.sleep = sleep
@@ -162,8 +162,8 @@ class IIIFDownloader:
         return f"{width or ''},{height or ''}"
 
     def save_iiif_img(self, img_rscr, i, size="full", re_download=False):
-        if "-" in self.manifest_id:
-            img_name = f"{self.manifest_id.replace('-', '')}_{i:04d}.jpg"
+        if ".jpg" in get_img_id(img_rscr):
+            img_name = get_img_id(img_rscr)
         else:
             img_name = f"{self.manifest_id}_{i:04d}.jpg"
 
