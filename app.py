@@ -28,8 +28,8 @@ def detect(manifest_url, model):
     model = DEFAULT_MODEL if model is None else model
 
     wit_id = downloader.get_dir_name()
-    wit_type = 'manuscript' if 'ms' in downloader.manifest_id else 'volume'
-    anno_id = downloader.manifest_id.replace("ms", "").replace("vol", "")
+    wit_type = 'manuscript' if 'manuscript' in manifest_url else 'volume'
+    anno_id = downloader.manifest_id
     anno_model = model.split('.')[0]
 
     # Directory in which to save annotation files
@@ -42,14 +42,15 @@ def detect(manifest_url, model):
     if not exists(ANNO_PATH / anno_model / wit_type):
         os.mkdir(ANNO_PATH / anno_model / wit_type)
 
+    anno_file = f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt"
+
     # If annotations are generated again, empty annotation file
-    if exists(f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt"):
-        open(f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt", 'w').close()
+    if exists(anno_file):
+        open(anno_file, 'w').close()
 
     log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
     wit_path = downloader.manifest_dir_path
 
-    anno_file = f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt"
     # For number and images in the witness images directory, run detection
     for i, img in enumerate(sorted(os.listdir(wit_path)), 1):
         log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
@@ -61,7 +62,7 @@ def detect(manifest_url, model):
         )
 
     app_endpoint = f"{ENV.str('CLIENT_APP_URL')}/{wit_type}/{anno_id}/annotate/"
-    with open(ANNO_PATH / anno_model / wit_type / f"{anno_id}.txt", 'r') as file:
+    with open(anno_file, 'r') as file:
         annotation_file = file.read()
 
     files = {"annotation_file": annotation_file}
