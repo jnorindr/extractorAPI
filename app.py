@@ -1,12 +1,13 @@
 from flask import Flask, request
 import os
+import requests
 from datetime import datetime, timedelta
 from celery.schedules import crontab
 import shutil
 
 from os.path import exists
 
-from utils.paths import ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, MANIFESTS_PATH, DEFAULT_MODEL
+from utils.paths import ENV, ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, MANIFESTS_PATH, DEFAULT_MODEL
 from utils.hosts import allow_hosts
 from utils.logger import log
 from utils.celery_utils import get_celery_app_instance
@@ -27,7 +28,8 @@ def detect(manifest_url, model):
     model = DEFAULT_MODEL if model is None else model
 
     wit_id = downloader.get_dir_name()
-    anno_id = downloader.manifest_id.replace("ms", "").replace("-", "")
+    wit_type = 'manuscript' if 'ms' in downloader.manifest_id else 'volume'
+    anno_id = downloader.manifest_id.replace("ms", "").replace("vol", "")
     anno_model = model.split('.')[0]
 
     # Directory in which to save annotation files
@@ -37,22 +39,34 @@ def detect(manifest_url, model):
     if not exists(ANNO_PATH / anno_model):
         os.mkdir(ANNO_PATH / anno_model)
 
+    if not exists(ANNO_PATH / anno_model / wit_type):
+        os.mkdir(ANNO_PATH / anno_model / wit_type)
+
     # If annotations are generated again, empty annotation file
-    if exists(f"{ANNO_DIR}/{anno_model}/{anno_id}.txt"):
-        open(f"{ANNO_DIR}/{anno_model}/{anno_id}.txt", 'w').close()
+    if exists(f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt"):
+        open(f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt", 'w').close()
 
     log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
     wit_path = downloader.manifest_dir_path
 
+    anno_file = f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt"
     # For number and images in the witness images directory, run detection
     for i, img in enumerate(sorted(os.listdir(wit_path)), 1):
         log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
         run_vhs(
             weights=f"{MODEL_PATH}/{model}",
             source=wit_path / img,
-            anno_file=f"{ANNO_DIR}/{anno_model}/{anno_id}.txt",
+            anno_file=anno_file,
             img_nb=i
         )
+
+    app_endpoint = f"{ENV.str('CLIENT_APP_URL')}/{wit_type}/{anno_id}/annotate/"
+    with open(ANNO_PATH / anno_model / wit_type / f"{anno_id}.txt", 'r') as file:
+        annotation_file = file.read()
+
+    files = {"annotation_file": annotation_file}
+
+    requests.post(url=app_endpoint, files=files)
 
     return 'Success'
 
