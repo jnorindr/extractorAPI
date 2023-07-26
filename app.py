@@ -61,15 +61,19 @@ def detect(manifest_url, model):
             img_nb=i
         )
 
-    app_endpoint = f"{ENV.str('CLIENT_APP_URL')}/{wit_type}/{anno_id}/annotate/"
-    with open(anno_file, 'r') as file:
-        annotation_file = file.read()
+    # TODO : renvoyer directement à l'URL qui envoie la requête
+    try:
+        app_endpoint = f"{ENV.str('CLIENT_APP_URL')}/{wit_type}/{anno_id}/annotate/"
+        with open(anno_file, 'r') as file:
+            annotation_file = file.read()
 
-    files = {"annotation_file": annotation_file}
+        files = {"annotation_file": annotation_file}
 
-    requests.post(url=app_endpoint, files=files)
+        requests.post(url=app_endpoint, files=files)
 
-    return 'Success'
+        return 'Annotations sent to application'
+    except Exception as e:
+        return f'An error occurred: {e}'
 
 
 @celery.task
