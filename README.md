@@ -1,8 +1,8 @@
-# Extractor API
+# Element extraction on a GPU
 
-API to run inference on a GPU using a model for element extraction. 
+extractoAPI is a tool to run on a GPU an algorithm using a model for element extraction in images.
 
-extractorAPI retreives images from a IIIF manifest or a list of manifests and uses a vision model to extract objects from images and return annotations in txt files. 
+extractorAPI retrieves images from a IIIF manifest or a list of manifests and uses a vision model to extract objects from images and return annotations in text files. 
 
 ## Requirements :hammer_and_wrench:
 
@@ -30,11 +30,12 @@ Copy the content of the template file
 ```bash
 cp .env{.template,}
 ```
-Change the content according to your host restrictions and Celery backend
+Change the content according to your host restrictions, Celery backend and the client app
 ```
 ALLOWED_HOSTS="<host1>,<host2>"
 CELERY_BROKER_URL="redis://<localhost-port>"
 DEBUG=True
+CLIENT_APP_URL="<url>"
 ```
 ## Run the application 
 Start Redis and Celery
