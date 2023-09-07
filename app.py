@@ -1,22 +1,41 @@
-from flask import Flask, request
+from flask import Flask
 import os
 import requests
+import shutil
 from datetime import datetime, timedelta
 from celery.schedules import crontab
-import shutil
-
 from os.path import exists
 
-from utils.paths import ENV, ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, MANIFESTS_PATH, DEFAULT_MODEL
-from utils.hosts import allow_hosts
+from utils.paths import ENV, ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL
 from utils.logger import log
-from utils.celery_utils import get_celery_app_instance
-
+from utils.celery_app import get_celery_app_instance
 from iiif.iiif_downloader import IIIFDownloader
 from yolov5.detect_vhs import run_vhs
 
+
 app = Flask(__name__)
 celery = get_celery_app_instance(app)
+
+
+@celery.task
+def delete_images():
+    # Function to delete images after a week
+    week_ago = datetime.now() - timedelta(days=7)
+    for ms_dir in os.listdir(IMG_PATH):
+        dir_path = os.path.join(IMG_PATH, ms_dir)
+        if os.path.isdir(dir_path):
+            dir_modified_time = datetime.fromtimestamp(os.path.getmtime(dir_path))
+            if dir_modified_time < week_ago:
+                shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
+
+
+@celery.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    # Periodic task setting for image deletion
+    sender.add_periodic_task(
+        crontab(hour=2, minute=0),
+        delete_images.s()
+    )
 
 
 @celery.task
@@ -76,60 +95,7 @@ def detect(manifest_url, model):
         return f'An error occurred: {e}'
 
 
-@celery.task
-def delete_images():
-    week_ago = datetime.now() - timedelta(days=7)
-    for ms_dir in os.listdir(IMG_PATH):
-        dir_path = os.path.join(IMG_PATH, ms_dir)
-        if os.path.isdir(dir_path):
-            dir_modified_time = datetime.fromtimestamp(os.path.getmtime(dir_path))
-            if dir_modified_time < week_ago:
-                shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
-
-
-@celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(
-        crontab(hour=2, minute=0),
-        delete_images.s()
-    )
-
-
-@app.route('/detect_all', methods=['POST'])
-# @allow_hosts
-def detect_all():
-    # Get manifest URL file from the request
-    url_file = request.files['url_file']
-    model = request.form.get('model')
-
-    if not exists(MANIFESTS_PATH):
-        os.mkdir(MANIFESTS_PATH)
-
-    # Save a copy of the file on the GPU
-    url_file.save(f'{MANIFESTS_PATH}/{url_file.filename}')
-
-    # Read file to list manifest URLs to be processed
-    with open(f'{MANIFESTS_PATH}/{url_file.filename}', mode='r') as f:
-        manifest_urls = f.read().splitlines()
-    manifest_urls = list(filter(None, manifest_urls))
-
-    for manifest_url in manifest_urls:
-        detect.delay(manifest_url, model)
-
-    return 'Success'
-
-
-@app.route("/run_detect", methods=['POST'])
-# @allow_hosts
-def run_detect():
-    # Get manifest URL from the request form
-    manifest_url = request.form['manifest_url']
-    model = request.form.get('model')
-
-    # function.delay() is used to trigger function as celery task
-    detect.delay(manifest_url, model)
-    return f"Run detect task triggered with Celery! Check terminal to see the logs..."
-
+import views
 
 if __name__ == '__main__':
     app.run()
