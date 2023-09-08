@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 import os
 import requests
 import shutil
@@ -14,6 +15,9 @@ from yolov5.detect_vhs import run_vhs
 
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = ENV.str('SQLALCHEMY_DATABASE_URI')
+
+db = SQLAlchemy(app)
 celery = get_celery_app_instance(app)
 
 

@@ -1,14 +1,26 @@
-from flask import request
 import os
-
+from flask import request
 from os.path import exists
 
 from app import app, detect
+from utils.security import key_required
 from utils.paths import MANIFESTS_PATH
 
 
+@app.route("/run_detect", methods=['POST'])
+@key_required
+def run_detect():
+    # Get manifest URL from the request form
+    manifest_url = request.form['manifest_url']
+    model = request.form.get('model')
+
+    # function.delay() is used to trigger function as celery task
+    detect.delay(manifest_url, model)
+    return f"Run detect task triggered with Celery! Check terminal to see the logs..."
+
+
 @app.route('/detect_all', methods=['POST'])
-# @allow_hosts
+@key_required
 def detect_all():
     # Get manifest URL file from the request
     url_file = request.files['url_file']
@@ -29,15 +41,3 @@ def detect_all():
         detect.delay(manifest_url, model)
 
     return 'Success'
-
-
-@app.route("/run_detect", methods=['POST'])
-# @allow_hosts
-def run_detect():
-    # Get manifest URL from the request form
-    manifest_url = request.form['manifest_url']
-    model = request.form.get('model')
-
-    # function.delay() is used to trigger function as celery task
-    detect.delay(manifest_url, model)
-    return f"Run detect task triggered with Celery! Check terminal to see the logs..."
