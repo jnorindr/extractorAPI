@@ -1,9 +1,13 @@
 # Extractor API
 Flask==2.0.1
 celery==5.2.7
+Flask-SQLAlchemy==3.0.5
 gunicorn==20.1.0
+Jinja2==3.1.2
 redis>= 4.1.0
 python-environ==0.4.54
+SQLAlchemy==2.0.20
+Werkzeug==2.3.7
 
 # IIIF DOWNLOADER
 certifi==2022.12.7

@@ -8,3 +8,4 @@ annotation/*
 manifests/*
 logs/*
 celerybeat-schedule
+*.db
