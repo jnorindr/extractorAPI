@@ -1,8 +1,8 @@
-# Extractor API
+# Element extraction on a GPU
 
-API to run inference on a GPU using a model for element extraction. 
+extractoAPI is a tool to run on a GPU an algorithm using a model for element extraction in images.
 
-extractorAPI retreives images from a IIIF manifest or a list of manifests and uses a vision model to extract objects from images and return annotations in txt files. 
+extractorAPI retrieves images from a IIIF manifest or a list of manifests and uses a vision model to extract objects from images and return annotations in text files. 
 
 ## Requirements :hammer_and_wrench:
 
