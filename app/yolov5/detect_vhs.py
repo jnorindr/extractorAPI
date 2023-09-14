@@ -14,11 +14,11 @@ if str(ROOT) not in sys.path:
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 from models.common import DetectMultiBackend
-from yolov5.utils.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
-from yolov5.utils.general import (Profile, check_file, check_img_size, check_imshow, cv2,
+from app.yolov5.utils.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
+from app.yolov5.utils.general import (Profile, check_file, check_img_size, check_imshow, cv2,
                            increment_path, non_max_suppression, scale_boxes, strip_optimizer, xyxy2xywh)
-from yolov5.utils.plots import Annotator, colors, save_one_box
-from yolov5.utils.torch_utils import select_device, smart_inference_mode
+from app.yolov5.utils.plots import Annotator, colors, save_one_box
+from app.yolov5.utils.torch_utils import select_device, smart_inference_mode
 
 
 @smart_inference_mode()

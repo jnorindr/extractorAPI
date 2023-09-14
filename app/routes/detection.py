@@ -3,11 +3,11 @@ import shutil
 from flask import request
 from os.path import exists
 
-from app import app
-from utils.tasks import detect
-from utils.security import key_required
-from utils.paths import MANIFESTS_PATH, IMG_PATH
-from iiif.iiif_downloader import IIIFDownloader
+from app.app import app
+from app.utils.tasks import detect
+from app.utils.security import key_required
+from app.utils.paths import MANIFESTS_PATH, IMG_PATH
+from app.iiif.iiif_downloader import IIIFDownloader
 
 
 @app.route("/run_detect", methods=['POST'])

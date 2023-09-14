@@ -1,4 +1,4 @@
-from db_models.apps import AppsModel
+from app.db_models.apps import AppsModel
 import functools
 from hmac import compare_digest
 from flask import request

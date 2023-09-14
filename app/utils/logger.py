@@ -1,9 +1,8 @@
 import logging
-import os
 import time
 
-from utils.paths import ENV, LOG_PATH
-from utils import pprint, check_and_create_if_not
+from app.utils.paths import ENV, LOG_PATH
+from app.utils import pprint, check_and_create_if_not
 
 DEBUG = ENV.list("DEBUG")
 

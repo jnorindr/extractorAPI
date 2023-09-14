@@ -1,4 +1,4 @@
-from app import celery
+from app.app import celery
 
 import os
 import requests
@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
-from utils.paths import ENV, ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL
-from utils.logger import log
-from iiif.iiif_downloader import IIIFDownloader
-from yolov5.detect_vhs import run_vhs
+from app.utils.paths import ENV, ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL
+from app.utils.logger import log
+from app.iiif.iiif_downloader import IIIFDownloader
+from app.yolov5.detect_vhs import run_vhs
 
 
 @celery.task
@@ -57,7 +57,7 @@ def detect(manifest_url, model):
     if not exists(ANNO_PATH / anno_model / wit_type):
         os.mkdir(ANNO_PATH / anno_model / wit_type)
 
-    anno_file = f"{ANNO_DIR}/{anno_model}/{wit_type}/{anno_id}.txt"
+    anno_file = f"{ANNO_PATH}/{anno_model}/{wit_type}/{anno_id}.txt"
 
     # If annotations are generated again, empty annotation file
     if exists(anno_file):

@@ -7,9 +7,9 @@ from PIL import Image, UnidentifiedImageError
 import requests
 from urllib.parse import urlparse
 
-from utils import check_and_create_if_not, sanitize_str, sanitize_url
-from utils.logger import console, log
-from utils.paths import IMG_PATH
+from app.utils import check_and_create_if_not, sanitize_str, sanitize_url
+from app.utils.logger import console, log
+from app.utils.paths import IMG_PATH
 
 
 def get_json(url):
