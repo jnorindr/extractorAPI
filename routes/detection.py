@@ -1,15 +1,21 @@
 import os
+import shutil
 from flask import request
 from os.path import exists
 
-from app import app, detect
+from app import app
+from utils.tasks import detect
 from utils.security import key_required
-from utils.paths import MANIFESTS_PATH
+from utils.paths import MANIFESTS_PATH, IMG_PATH
+from iiif.iiif_downloader import IIIFDownloader
 
 
 @app.route("/run_detect", methods=['POST'])
 @key_required
 def run_detect():
+    """
+    To download images from a IIIF manifest and launch detection
+    """
     # Get manifest URL from the request form
     manifest_url = request.form['manifest_url']
     model = request.form.get('model')
@@ -22,6 +28,9 @@ def run_detect():
 @app.route('/detect_all', methods=['POST'])
 @key_required
 def detect_all():
+    """
+    To download images from a list of IIIF manifest and launch detection
+    """
     # Get manifest URL file from the request
     url_file = request.files['url_file']
     model = request.form.get('model')
@@ -41,3 +50,26 @@ def detect_all():
         detect.delay(manifest_url, model)
 
     return 'Success'
+
+
+@app.route('/delete_detect', methods=['POST'])
+@key_required
+def delete_detect():
+    """
+    To delete images for a witness and relaunch detection
+    """
+    # Get manifest URL from the request form
+    manifest_url = request.form['manifest_url']
+    model = request.form.get('model')
+
+    manifest = IIIFDownloader(manifest_url)
+    dir_path = os.path.join(IMG_PATH, IIIFDownloader.get_dir_name(manifest))
+
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
+        # function.delay() is used to trigger function as celery task
+        detect.delay(manifest_url, model)
+        return f"Image deletion and detection task triggered with Celery! Check terminal to see the logs..."
+
+    else:
+        return f"No images to delete."
