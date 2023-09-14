@@ -57,10 +57,11 @@ SQLALCHEMY_DATABASE_URI=sqlite:////<database-path>
 ## Run the application 
 Start Redis and Celery
 ```shell
-sudo systemctl start redis && celery -A app.celery worker -B -c 1 --loglevel=info
+sudo systemctl start redis && celery -A app.app.celery worker -B -c 1 --loglevel=info
 ```
+Run the app
 ```shell
-FLASK_ENV=development FLASK_APP=app.py flask run
+python run.py
 ```
 ## Launch annotation :rocket:
 One manifest
