@@ -17,7 +17,7 @@ IMG_PATH = Path(f"{API_ROOT}/{APP_DIR}/{IMG_DIR}")
 ANNO_PATH = Path(f"{API_ROOT}/{APP_DIR}/{ANNO_DIR}")
 MODEL_PATH = Path(f"{API_ROOT}/{APP_DIR}/{YOLO_DIR}")
 MANIFESTS_PATH = Path(f"{API_ROOT}/{APP_DIR}/{MANIFESTS_DIR}")
-LOG_PATH = Path(f"{API_ROOT}/{APP_DIR}/{LOG_DIR}/api_logs.log")
+LOG_PATH = Path(f"{API_ROOT}/{LOG_DIR}/api_logs.log")
 
 ENV = environ.Env()
 environ.Env.read_env(env_file=f"{API_ROOT}/.env")

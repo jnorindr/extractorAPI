@@ -6,6 +6,6 @@ __pycache__/
 /app/img/
 /app/annotation/
 /app/manifests/
-/app/logs/
+logs/
 celerybeat-schedule
 *.db
