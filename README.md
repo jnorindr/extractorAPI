@@ -42,6 +42,10 @@ Add an app and its key to the database
 INSERT INTO table_name [(id, app_name, app_key)]
 VALUES (value, value2, value3);
 ```
+Exit the SQLite shell
+```
+.exit
+```
 #### Setting the environment variables
 Copy the content of the template file
 ```bash
@@ -49,10 +53,27 @@ cp .env{.template,}
 ```
 Change the content according to your Celery backend, client app and API keys database
 ```
-CELERY_BROKER_URL="redis://<localhost-port>"
+CELERY_BROKER_URL="redis://:<redis-password>@<localhost-port>/0"
 DEBUG=True
 CLIENT_APP_URL="<url>"
 SQLALCHEMY_DATABASE_URI=sqlite:////<database-path>
+```
+#### Enabling authentication for Redis instance
+Open the Redis configuration file
+```
+vim /etc/redis/redis.conf
+```
+Uncomment and set a password
+```
+requirepass <your_password>
+```
+Restart Redis
+```
+sudo systemctl restart redis-server
+```
+Test the password
+```
+redis-cli -a <your_password>
 ```
 ## Run the application 
 Start Redis and Celery
