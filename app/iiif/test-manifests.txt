@@ -30,3 +30,4 @@ https://adore.ugent.be/IIIF/manifests/archive.ugent.be%253A010C9ED6-94DB-11E3-AF
 https://iiif.library.utoronto.ca/presentation/v2/fisher2:F6521/manifest
 https://sharedcanvas.be/IIIF/manifests/B_OB_MS618
 https://cdm16003.contentdm.oclc.org/iiif/2/p15150coll7:10585/manifest.json
+https://eida.obspm.fr/eida/iiif/ms4_img14/manifest.json

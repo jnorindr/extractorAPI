@@ -21,7 +21,8 @@ def sanitize_url(string):
 
 
 def sanitize_str(string):
-    return string.replace("/", "").replace(".", "").replace("https:", "").replace("www", "").replace(" ", "_")
+    return (string.replace("/", "").replace(".", "").replace("https", "").replace("http", "")
+            .replace("www", "").replace(" ", "_").replace(":", ""))
 
 
 def pprint(o):
