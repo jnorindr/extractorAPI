@@ -35,56 +35,49 @@ def setup_periodic_tasks(sender, **kwargs):
 
 
 @celery.task
-def detect(manifest_url, model):
+def detect(manifest_url, model=None, callback=None):
     # Save images from IIIF manifest
     downloader = IIIFDownloader(manifest_url)
     downloader.run()
 
     model = DEFAULT_MODEL if model is None else model
 
-    wit_id = downloader.get_dir_name()
-    wit_type = 'manuscript' if 'manuscript' in manifest_url else 'volume'
-    anno_id = downloader.manifest_id
+    digit_dir = downloader.get_dir_name()
+    digit_ref = downloader.manifest_id  # TODO check if it really "{wit_abbr}{wit_id}_{digit_abbr}{digit_id}
     anno_model = model.split('.')[0]
 
-    # Directory in which to save annotation files
-    if not exists(ANNO_PATH):
-        os.mkdir(ANNO_PATH)
+    anno_dir = ANNO_PATH / anno_model / digit_dir
+    if not exists(anno_dir):
+        # create all necessary parent directories
+        os.makedirs(anno_dir)
 
-    if not exists(ANNO_PATH / anno_model):
-        os.mkdir(ANNO_PATH / anno_model)
+    anno_file = f"{anno_dir}/{digit_ref}.txt"
 
-    if not exists(ANNO_PATH / anno_model / wit_type):
-        os.mkdir(ANNO_PATH / anno_model / wit_type)
-
-    anno_file = f"{ANNO_PATH}/{anno_model}/{wit_type}/{anno_id}.txt"
-
-    # If annotations are generated again, empty annotation file
     if exists(anno_file):
+        # If annotations are generated again, empty annotation file
         open(anno_file, 'w').close()
 
-    log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {wit_id} 🕵️\x1b[0m\n\n")
-    wit_path = downloader.manifest_dir_path
+    log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️\x1b[0m\n\n")
+    digit_path = IMG_PATH / digit_dir
 
     # For number and images in the witness images directory, run detection
-    for i, img in enumerate(sorted(os.listdir(wit_path)), 1):
+    for i, img in enumerate(sorted(os.listdir(digit_dir)), 1):
         log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
         run_vhs(
             weights=f"{MODEL_PATH}/{model}",
-            source=wit_path / img,
+            source=digit_path / img,
             anno_file=anno_file,
             img_nb=i
         )
 
-    # TODO : renvoyer directement à l'URL qui envoie la requête
     try:
-        app_endpoint = f"{ENV.str('CLIENT_APP_URL')}/{wit_type}/{anno_id}/annotate/"
         with open(anno_file, 'r') as file:
             annotation_file = file.read()
 
-        files = {"annotation_file": annotation_file}
-
-        requests.post(url=app_endpoint, files=files)
+        requests.post(
+            url=f"{callback}/{digit_ref}" if callback else f"{ENV.str('CLIENT_APP_URL')}/annotate/{digit_ref}",
+            files={"annotation_file": annotation_file}
+        )
 
         return 'Annotations sent to application'
     except Exception as e:
