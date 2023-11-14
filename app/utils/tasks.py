@@ -46,7 +46,7 @@ def detect(manifest_url, model=None, callback=None):
     digit_ref = downloader.manifest_id  # TODO check if it really "{wit_abbr}{wit_id}_{digit_abbr}{digit_id}
     anno_model = model.split('.')[0]
 
-    anno_dir = ANNO_PATH / anno_model / digit_dir
+    anno_dir = ANNO_PATH / anno_model
     if not exists(anno_dir):
         # create all necessary parent directories
         os.makedirs(anno_dir)
@@ -61,7 +61,7 @@ def detect(manifest_url, model=None, callback=None):
     digit_path = IMG_PATH / digit_dir
 
     # For number and images in the witness images directory, run detection
-    for i, img in enumerate(sorted(os.listdir(digit_dir)), 1):
+    for i, img in enumerate(sorted(os.listdir(digit_path)), 1):
         log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
         run_vhs(
             weights=f"{MODEL_PATH}/{model}",

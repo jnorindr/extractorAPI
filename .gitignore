@@ -9,3 +9,5 @@ __pycache__/
 logs/
 celerybeat-schedule
 *.db
+app/yolov5/data/datasets/
+*.yaml
