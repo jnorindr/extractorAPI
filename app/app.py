@@ -18,4 +18,4 @@ celery = Celery(
 celery.conf.update(app.config)
 
 
-from app.routes import detection
+from app.routes import detection, training
