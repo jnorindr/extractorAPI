@@ -31,7 +31,7 @@ Create a SQLite database at the root of the API repository to store API keys
 sqlite3 DatabaseName.db
 ```
 ```
-CREATE TABLE database_name.table_name(
+CREATE TABLE table_name(
    id INT PRIMARY KEY NOT NULL,
    app_name CHAR(50) NOT NULL,
    app_key CHAR(80) NOT NULL
@@ -39,8 +39,7 @@ CREATE TABLE database_name.table_name(
 ```
 Add an app and its key to the database
 ```
-INSERT INTO table_name [(id, app_name, app_key)]
-VALUES (value, value2, value3);
+INSERT INTO table_name VALUES ('value', 'value2', 'value3');
 ```
 Exit the SQLite shell
 ```
