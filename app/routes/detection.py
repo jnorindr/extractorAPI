@@ -77,7 +77,6 @@ def delete_detect():
         return f"No images to delete."
 
 
-# TODO: create endpoint to get all available models
 @app.route('/models', methods=['GET'])
 def get_models():
     models_info = {}
@@ -86,6 +85,6 @@ def get_models():
         if filename.endswith(".pt"):
             full_path = os.path.join(MODEL_PATH, filename)
             modification_date = os.path.getmtime(full_path)
-            models_info[filename] = modification_date
+            models_info[filename] = time.ctime(modification_date)
 
     return jsonify(models_info)

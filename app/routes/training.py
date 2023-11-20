@@ -1,4 +1,5 @@
 import os
+import time
 import zipfile
 from flask import request, jsonify
 from os.path import exists
@@ -38,12 +39,13 @@ def send_dataset():
 
     return f"{dataset_name} sent for {action}"
 
-# TODO
+
 # @app.route('/test-model', methods=['POST'])
-# @key_required
+# # @key_required
 # def test_model():
+#     model = request.form.get('model')
+#     dataset = request.form.get('dataset')
     # Lancer script test en asynchrone
-    # Param pour décider du modèle à tester
     # Retourner résultats ?
 
 
@@ -54,15 +56,13 @@ def send_dataset():
     # Param pour décider du modèle + du dataset
 
 
-# TODO: create endpoint to get all available datasets
-# @app.route('/datasets', methods=['GET'])
-# def get_datasets():
-   # datasets_info = {}
+@app.route('/datasets', methods=['GET'])
+def get_datasets():
+    datasets_info = {}
 
-    # for filename in os.listdir(MODEL_PATH):
-    #     if filename.endswith(".pt"):
-    #        full_path = os.path.join(MODEL_PATH, filename)
-    #        modification_date = os.path.getmtime(full_path)
-    #        models_info[filename] = modification_date
+    for dirname in os.listdir(DATASETS_PATH):
+        full_path = os.path.join(DATASETS_PATH, dirname)
+        modification_date = os.path.getmtime(full_path)
+        datasets_info[dirname] = time.ctime(modification_date)
 
-    # return jsonify(datasets_info)
+    return jsonify(datasets_info)
