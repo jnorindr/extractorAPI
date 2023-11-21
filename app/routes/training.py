@@ -6,7 +6,8 @@ from os.path import exists
 
 from app.app import app
 from app.utils.security import key_required
-from app.utils.paths import DATA_PATH, DATASETS_PATH
+from app.utils.paths import DATA_PATH, DATASETS_PATH, MODEL_PATH
+from app.yolov5 import val as validate
 
 
 @app.route('/send-dataset', methods=['POST'])
@@ -40,20 +41,17 @@ def send_dataset():
     return f"{dataset_name} sent for {action}"
 
 
-# @app.route('/test-model', methods=['POST'])
-# # @key_required
-# def test_model():
-#     model = request.form.get('model')
-#     dataset = request.form.get('dataset')
-    # Lancer script test en asynchrone
-    # Retourner résultats ?
-
-
-# @app.route('/train-model', methods=['POST'])
+@app.route('/test-model', methods=['POST'])
 # @key_required
-# def train_model():
-    # Lancer script entrainement
-    # Param pour décider du modèle + du dataset
+def test_model():
+    model = request.form.get('model')
+    data = request.form.get('data')
+
+    validate.run(
+        weights=f"{MODEL_PATH}/{model}",
+        data=f"{DATA_PATH}/{data}.yaml",
+        task='test'
+    )
 
 
 @app.route('/datasets', methods=['GET'])
