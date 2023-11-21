@@ -11,7 +11,7 @@ from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL,
 from app.utils.logger import log
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
-from app.yolov5 import val
+from app.yolov5 import val, train
 
 
 @celery.task
@@ -96,5 +96,21 @@ def validate(model, data, name):
         )
 
         return f"Validated model {model} with {data} dataset."
+
+    except Exception as e:
+        return f'An error occurred: {e}'
+
+
+@celery.task
+def training(model, data):
+    try:
+        train.run(
+            weights=f"{MODEL_PATH}/{model}",
+            data=f"{DATA_PATH}/{data}.yaml",
+            imgsz=320
+        )
+
+        return f"Trained model {model} with {data} dataset."
+
     except Exception as e:
         return f'An error occurred: {e}'
