@@ -10,4 +10,5 @@ logs/
 celerybeat-schedule
 *.db
 app/yolov5/data/datasets/
+app/yolov5/runs/*
 *.yaml

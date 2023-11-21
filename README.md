@@ -31,7 +31,7 @@ Create a SQLite database at the root of the API repository to store API keys
 sqlite3 DatabaseName.db
 ```
 ```
-CREATE TABLE database_name.table_name(
+CREATE TABLE table_name(
    id INT PRIMARY KEY NOT NULL,
    app_name CHAR(50) NOT NULL,
    app_key CHAR(80) NOT NULL
@@ -78,7 +78,7 @@ redis-cli -a <your_password>
 ## Run the application 
 Start Redis and Celery
 ```shell
-sudo systemctl start redis && celery -A app.app.celery worker -B -c 1 --loglevel=info
+sudo systemctl start redis && celery -A app.app.celery worker -B -c 1 --loglevel=info -P threads
 ```
 Run the app
 ```shell

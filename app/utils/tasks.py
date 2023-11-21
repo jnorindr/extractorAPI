@@ -7,10 +7,11 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
-from app.utils.paths import ENV, ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH
 from app.utils.logger import log
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
+from app.yolov5 import val
 
 
 @celery.task
@@ -80,5 +81,20 @@ def detect(manifest_url, model=None, callback=None):
         )
 
         return 'Annotations sent to application'
+    except Exception as e:
+        return f'An error occurred: {e}'
+
+
+@celery.task
+def validate(model, data, name):
+    try:
+        val.run(
+            weights=f"{MODEL_PATH}/{model}",
+            data=f"{DATA_PATH}/{data}.yaml",
+            name=f"{name}",
+            task='test'
+        )
+
+        return f"Validated model {model} with {data} dataset."
     except Exception as e:
         return f'An error occurred: {e}'

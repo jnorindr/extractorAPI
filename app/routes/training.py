@@ -6,8 +6,8 @@ from os.path import exists
 
 from app.app import app
 from app.utils.security import key_required
-from app.utils.paths import DATA_PATH, DATASETS_PATH, MODEL_PATH
-from app.yolov5 import val as validate
+from app.utils.tasks import validate
+from app.utils.paths import DATA_PATH, DATASETS_PATH
 
 
 @app.route('/send-dataset', methods=['POST'])
@@ -65,18 +65,14 @@ def send_dataset():
 
 
 @app.route('/test-model', methods=['POST'])
-# @key_required
+@key_required
 def test_model():
     model = request.form.get('model')
     data = request.form.get('data')
     name = request.form.get('name')
 
-    validate.run(
-        weights=f"{MODEL_PATH}/{model}",
-        data=f"{DATA_PATH}/{data}.yaml",
-        name=f"{name}",
-        task='test'
-    )
+    validate.delay(model, data, name)
+    return f"Validation task triggered with Celery!"
 
 
 @app.route('/datasets', methods=['GET'])

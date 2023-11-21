@@ -23,7 +23,7 @@ def run_detect():
 
     # function.delay() is used to trigger function as celery task
     detect.delay(manifest_url, model)
-    return f"Run detect task triggered with Celery! Check terminal to see the logs..."
+    return f"Detection task triggered with Celery!"
 
 
 @app.route('/detect_all', methods=['POST'])
