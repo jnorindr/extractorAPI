@@ -7,10 +7,11 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
-from app.utils.paths import ENV, ANNO_DIR, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH
 from app.utils.logger import log
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
+from app.yolov5 import val, train
 
 
 @celery.task
@@ -46,7 +47,7 @@ def detect(manifest_url, model=None, callback=None):
     digit_ref = downloader.manifest_id  # TODO check if it really "{wit_abbr}{wit_id}_{digit_abbr}{digit_id}
     anno_model = model.split('.')[0]
 
-    anno_dir = ANNO_PATH / anno_model / digit_dir
+    anno_dir = ANNO_PATH / anno_model
     if not exists(anno_dir):
         # create all necessary parent directories
         os.makedirs(anno_dir)
@@ -61,7 +62,7 @@ def detect(manifest_url, model=None, callback=None):
     digit_path = IMG_PATH / digit_dir
 
     # For number and images in the witness images directory, run detection
-    for i, img in enumerate(sorted(os.listdir(digit_dir)), 1):
+    for i, img in enumerate(sorted(os.listdir(digit_path)), 1):
         log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
         run_vhs(
             weights=f"{MODEL_PATH}/{model}",
@@ -80,5 +81,36 @@ def detect(manifest_url, model=None, callback=None):
         )
 
         return 'Annotations sent to application'
+    except Exception as e:
+        return f'An error occurred: {e}'
+
+
+@celery.task
+def validate(model, data, name):
+    try:
+        val.run(
+            weights=f"{MODEL_PATH}/{model}",
+            data=f"{DATA_PATH}/{data}.yaml",
+            name=f"{name}",
+            task='test'
+        )
+
+        return f"Validated model {model} with {data} dataset."
+
+    except Exception as e:
+        return f'An error occurred: {e}'
+
+
+@celery.task
+def training(model, data):
+    try:
+        train.run(
+            weights=f"{MODEL_PATH}/{model}",
+            data=f"{DATA_PATH}/{data}.yaml",
+            imgsz=320
+        )
+
+        return f"Trained model {model} with {data} dataset."
+
     except Exception as e:
         return f'An error occurred: {e}'

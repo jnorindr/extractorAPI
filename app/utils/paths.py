@@ -10,13 +10,19 @@ ANNO_DIR = "annotation"
 YOLO_DIR = "yolov5"
 MANIFESTS_DIR = "manifests"
 LOG_DIR = "logs"
+DATA_DIR = "data"
+DATASETS_DIR = "datasets"
 
 DEFAULT_MODEL = "yolo_last_sved_vhs_sullivan.pt"
 
 IMG_PATH = Path(f"{API_ROOT}/{APP_DIR}/{IMG_DIR}")
 ANNO_PATH = Path(f"{API_ROOT}/{APP_DIR}/{ANNO_DIR}")
-MODEL_PATH = Path(f"{API_ROOT}/{APP_DIR}/{YOLO_DIR}")
 MANIFESTS_PATH = Path(f"{API_ROOT}/{APP_DIR}/{MANIFESTS_DIR}")
+
+MODEL_PATH = Path(f"{API_ROOT}/{APP_DIR}/{YOLO_DIR}")
+DATA_PATH = Path(f"{API_ROOT}/{APP_DIR}/{YOLO_DIR}/{DATA_DIR}")
+DATASETS_PATH = Path(f"{DATA_PATH}/{DATASETS_DIR}")
+
 LOG_PATH = Path(f"{API_ROOT}/{LOG_DIR}/api_logs.log")
 
 ENV = environ.Env()

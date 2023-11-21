@@ -77,7 +77,7 @@ redis-cli -a <your_password>
 ## Run the application 
 Start Redis and Celery
 ```shell
-sudo systemctl start redis && celery -A app.app.celery worker -B -c 1 --loglevel=info
+sudo systemctl start redis && celery -A app.app.celery worker -B -c 1 --loglevel=info -P threads
 ```
 Run the app
 ```shell

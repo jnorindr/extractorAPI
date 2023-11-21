@@ -117,7 +117,7 @@ def run(
         project=ROOT / 'runs/val',  # save to project/name
         name='exp',  # save to project/name
         exist_ok=False,  # existing project/name ok, do not increment
-        half=True,  # use FP16 half-precision inference
+        half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
         model=None,
         dataloader=None,
@@ -337,73 +337,73 @@ def run(
     return (mp, mr, map50, map, *(loss.cpu() / len(dataloader)).tolist()), maps, t
 
 
-def parse_opt():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='dataset.yaml path')
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path(s)')
-    parser.add_argument('--batch-size', type=int, default=32, help='batch size')
-    parser.add_argument('--imgsz', '--img', '--img-size', type=int, default=640, help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float, default=0.001, help='confidence threshold')
-    parser.add_argument('--iou-thres', type=float, default=0.6, help='NMS IoU threshold')
-    parser.add_argument('--max-det', type=int, default=300, help='maximum detections per image')
-    parser.add_argument('--task', default='val', help='train, val, test, speed or study')
-    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--workers', type=int, default=8, help='max dataloader workers (per RANK in DDP mode)')
-    parser.add_argument('--single-cls', action='store_true', help='treat as single-class dataset')
-    parser.add_argument('--augment', action='store_true', help='augmented inference')
-    parser.add_argument('--verbose', action='store_true', help='report mAP by class')
-    parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
-    parser.add_argument('--save-hybrid', action='store_true', help='save label+prediction hybrid results to *.txt')
-    parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
-    parser.add_argument('--save-json', action='store_true', help='save a COCO-JSON results file')
-    parser.add_argument('--project', default=ROOT / 'runs/val', help='save to project/name')
-    parser.add_argument('--name', default='exp', help='save to project/name')
-    parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
-    parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
-    parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
-    opt = parser.parse_args()
-    opt.data = check_yaml(opt.data)  # check YAML
-    opt.save_json |= opt.data.endswith('coco.yaml')
-    opt.save_txt |= opt.save_hybrid
-    print_args(vars(opt))
-    return opt
+# def parse_opt():
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='dataset.yaml path')
+#     parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s.pt', help='model path(s)')
+#     parser.add_argument('--batch-size', type=int, default=32, help='batch size')
+#     parser.add_argument('--imgsz', '--img', '--img-size', type=int, default=640, help='inference size (pixels)')
+#     parser.add_argument('--conf-thres', type=float, default=0.001, help='confidence threshold')
+#     parser.add_argument('--iou-thres', type=float, default=0.6, help='NMS IoU threshold')
+#     parser.add_argument('--max-det', type=int, default=300, help='maximum detections per image')
+#     parser.add_argument('--task', default='val', help='train, val, test, speed or study')
+#     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+#     parser.add_argument('--workers', type=int, default=8, help='max dataloader workers (per RANK in DDP mode)')
+#     parser.add_argument('--single-cls', action='store_true', help='treat as single-class dataset')
+#     parser.add_argument('--augment', action='store_true', help='augmented inference')
+#     parser.add_argument('--verbose', action='store_true', help='report mAP by class')
+#     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+#     parser.add_argument('--save-hybrid', action='store_true', help='save label+prediction hybrid results to *.txt')
+#     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
+#     parser.add_argument('--save-json', action='store_true', help='save a COCO-JSON results file')
+#     parser.add_argument('--project', default=ROOT / 'runs/val', help='save to project/name')
+#     parser.add_argument('--name', default='exp', help='save to project/name')
+#     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
+#     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
+#     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
+#     opt = parser.parse_args()
+#     opt.data = check_yaml(opt.data)  # check YAML
+#     opt.save_json |= opt.data.endswith('coco.yaml')
+#     opt.save_txt |= opt.save_hybrid
+#     print_args(vars(opt))
+#     return opt
 
 
-def main(opt):
-    check_requirements(exclude=('tensorboard', 'thop'))
+# def main(opt):
+#     check_requirements(exclude=('tensorboard', 'thop'))
+#
+#     if opt.task in ('train', 'val', 'test'):  # run normally
+#         if opt.conf_thres > 0.001:  # https://github.com/ultralytics/yolov5/issues/1466
+#             LOGGER.info(f'WARNING ⚠️ confidence threshold {opt.conf_thres} > 0.001 produces invalid results')
+#         if opt.save_hybrid:
+#             LOGGER.info('WARNING ⚠️ --save-hybrid will return high mAP from hybrid labels, not from predictions alone')
+#         run(**vars(opt))
+#
+#     else:
+#         weights = opt.weights if isinstance(opt.weights, list) else [opt.weights]
+#         opt.half = torch.cuda.is_available() and opt.device != 'cpu'  # FP16 for fastest results
+#         if opt.task == 'speed':  # speed benchmarks
+#             # python val.py --task speed --data coco.yaml --batch 1 --weights yolov5n.pt yolov5s.pt...
+#             opt.conf_thres, opt.iou_thres, opt.save_json = 0.25, 0.45, False
+#             for opt.weights in weights:
+#                 run(**vars(opt), plots=False)
+#
+#         elif opt.task == 'study':  # speed vs mAP benchmarks
+#             # python val.py --task study --data coco.yaml --iou 0.7 --weights yolov5n.pt yolov5s.pt...
+#             for opt.weights in weights:
+#                 f = f'study_{Path(opt.data).stem}_{Path(opt.weights).stem}.txt'  # filename to save to
+#                 x, y = list(range(256, 1536 + 128, 128)), []  # x axis (image sizes), y axis
+#                 for opt.imgsz in x:  # img-size
+#                     LOGGER.info(f'\nRunning {f} --imgsz {opt.imgsz}...')
+#                     r, _, t = run(**vars(opt), plots=False)
+#                     y.append(r + t)  # results and times
+#                 np.savetxt(f, y, fmt='%10.4g')  # save
+#             subprocess.run(['zip', '-r', 'study.zip', 'study_*.txt'])
+#             plot_val_study(x=x)  # plot
+#         else:
+#             raise NotImplementedError(f'--task {opt.task} not in ("train", "val", "test", "speed", "study")')
 
-    if opt.task in ('train', 'val', 'test'):  # run normally
-        if opt.conf_thres > 0.001:  # https://github.com/ultralytics/yolov5/issues/1466
-            LOGGER.info(f'WARNING ⚠️ confidence threshold {opt.conf_thres} > 0.001 produces invalid results')
-        if opt.save_hybrid:
-            LOGGER.info('WARNING ⚠️ --save-hybrid will return high mAP from hybrid labels, not from predictions alone')
-        run(**vars(opt))
-
-    else:
-        weights = opt.weights if isinstance(opt.weights, list) else [opt.weights]
-        opt.half = torch.cuda.is_available() and opt.device != 'cpu'  # FP16 for fastest results
-        if opt.task == 'speed':  # speed benchmarks
-            # python val.py --task speed --data coco.yaml --batch 1 --weights yolov5n.pt yolov5s.pt...
-            opt.conf_thres, opt.iou_thres, opt.save_json = 0.25, 0.45, False
-            for opt.weights in weights:
-                run(**vars(opt), plots=False)
-
-        elif opt.task == 'study':  # speed vs mAP benchmarks
-            # python val.py --task study --data coco.yaml --iou 0.7 --weights yolov5n.pt yolov5s.pt...
-            for opt.weights in weights:
-                f = f'study_{Path(opt.data).stem}_{Path(opt.weights).stem}.txt'  # filename to save to
-                x, y = list(range(256, 1536 + 128, 128)), []  # x axis (image sizes), y axis
-                for opt.imgsz in x:  # img-size
-                    LOGGER.info(f'\nRunning {f} --imgsz {opt.imgsz}...')
-                    r, _, t = run(**vars(opt), plots=False)
-                    y.append(r + t)  # results and times
-                np.savetxt(f, y, fmt='%10.4g')  # save
-            subprocess.run(['zip', '-r', 'study.zip', 'study_*.txt'])
-            plot_val_study(x=x)  # plot
-        else:
-            raise NotImplementedError(f'--task {opt.task} not in ("train", "val", "test", "speed", "study")')
-
-
-if __name__ == '__main__':
-    opt = parse_opt()
-    main(opt)
+#
+# if __name__ == '__main__':
+#     opt = parse_opt()
+#     main(opt)
