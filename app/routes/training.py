@@ -23,22 +23,45 @@ def send_dataset():
     anno_dir = DATASETS_PATH / dataset_name / "labels" / action
     yaml_file_path = DATA_PATH / f"{dataset_name}.yaml"
 
-    if not exists(imgs_dir):
-        os.makedirs(imgs_dir)
+    try:
+        if not exists(imgs_dir):
+            os.makedirs(imgs_dir)
 
-    if not exists(anno_dir):
-        os.makedirs(anno_dir)
+        if not exists(anno_dir):
+            os.makedirs(anno_dir)
 
-    with zipfile.ZipFile(img_zip, 'r') as imgs:
-        imgs.extractall(imgs_dir)
+        if action == 'test':
+            # Create val directories for tests to avoid an error
+            val_imgs_dir = DATASETS_PATH / dataset_name / "images" / "val"
+            val_anno_dir = DATASETS_PATH / dataset_name / "labels" / "val"
+            if not exists(val_imgs_dir):
+                os.makedirs(val_imgs_dir)
 
-    with zipfile.ZipFile(anno_zip, 'r') as annos:
-        annos.extractall(anno_dir)
+            if not exists(val_anno_dir):
+                os.makedirs(val_anno_dir)
 
-    with open(yaml_file_path, 'w') as yaml:
-        yaml.write(yaml_file.read().decode('utf-8'))
+        try:
+            with zipfile.ZipFile(img_zip, 'r') as imgs:
+                imgs.extractall(imgs_dir)
+        except Exception as e:
+            return f'An error occurred while extracting images: {e}'
 
-    return f"{dataset_name} sent for {action}"
+        try:
+            with zipfile.ZipFile(anno_zip, 'r') as annos:
+                annos.extractall(anno_dir)
+        except Exception as e:
+            return f'An error occurred while extracting annotations: {e}'
+
+        try:
+            with open(yaml_file_path, 'w') as yaml:
+                yaml.write(yaml_file.read().decode('utf-8'))
+        except Exception as e:
+            return f'An error occurred while writing YAML file: {e}'
+
+        return f"{dataset_name} sent for {action}"
+
+    except Exception as e:
+        return f'An error occurred: {e}'
 
 
 @app.route('/test-model', methods=['POST'])
@@ -46,10 +69,12 @@ def send_dataset():
 def test_model():
     model = request.form.get('model')
     data = request.form.get('data')
+    name = request.form.get('name')
 
     validate.run(
         weights=f"{MODEL_PATH}/{model}",
         data=f"{DATA_PATH}/{data}.yaml",
+        name=f"{name}",
         task='test'
     )
 
