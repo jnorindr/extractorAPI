@@ -16,9 +16,9 @@ def send_dataset():
     img_zip = request.files['img_zip']
     anno_zip = request.files['anno_zip']
     yaml_file = request.files['yaml_file']
-    dataset_name = request.form.get('dataset_name')
     action = request.form.get('action')
 
+    dataset_name = yaml_file.filename.replace('.yaml', '')
     imgs_dir = DATASETS_PATH / dataset_name / "images" / action
     anno_dir = DATASETS_PATH / dataset_name / "labels" / action
     yaml_file_path = DATA_PATH / f"{dataset_name}.yaml"
