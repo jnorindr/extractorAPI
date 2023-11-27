@@ -57,6 +57,11 @@ DEBUG=True
 CLIENT_APP_URL="<url>"
 SQLALCHEMY_DATABASE_URI=sqlite:////<database-path>
 ```
+If you want to use the API for training and use Comet as a tracker, add to your `.env`:
+```
+COMET_API_KEY=<comet-API-key>
+COMET_PROJECT_NAME=<project-name>
+```
 #### Enabling authentication for Redis instance
 Open the Redis configuration file
 ```
