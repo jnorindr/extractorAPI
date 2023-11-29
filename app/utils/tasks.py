@@ -80,7 +80,7 @@ def detect(manifest_url, model=None, callback=None):
             files={"annotation_file": annotation_file}
         )
 
-        return 'Annotations sent to application'
+        return f'Annotations sent to {callback}'
     except Exception as e:
         return f'An error occurred: {e}'
 
