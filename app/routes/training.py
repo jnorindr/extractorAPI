@@ -11,7 +11,7 @@ from app.utils.paths import DATA_PATH, DATASETS_PATH
 
 
 @app.route('/send-dataset', methods=['POST'])
-# @key_required
+@key_required
 def send_dataset():
     img_zip = request.files['img_zip']
     anno_zip = request.files['anno_zip']
@@ -76,7 +76,7 @@ def test_model():
 
 
 @app.route('/train-model', methods=['POST'])
-# @key_required
+@key_required
 def train_model():
     model = request.form.get('model')
     data = request.form.get('data')

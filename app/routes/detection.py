@@ -20,9 +20,10 @@ def run_detect():
     # Get manifest URL from the request form
     manifest_url = request.form['manifest_url']
     model = request.form.get('model')
+    callback = request.form.get('callback')
 
     # function.delay() is used to trigger function as celery task
-    detect.delay(manifest_url, model)
+    detect.delay(manifest_url, model, callback)
     return f"Detection task triggered with Celery!"
 
 
