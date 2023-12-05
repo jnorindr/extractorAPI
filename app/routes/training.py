@@ -10,9 +10,9 @@ from app.utils.tasks import validate, training
 from app.utils.paths import DATA_PATH, DATASETS_PATH
 
 
-@app.route('/send-dataset', methods=['POST'])
+@app.route('/send-data', methods=['POST'])
 @key_required
-def send_dataset():
+def send_data():
     img_zip = request.files['img_zip']
     anno_zip = request.files['anno_zip']
     yaml_file = request.files['yaml_file']
@@ -59,6 +59,30 @@ def send_dataset():
             return f'An error occurred while writing YAML file: {e}'
 
         return f"{dataset_name} sent for {action}"
+
+    except Exception as e:
+        return f'An error occurred: {e}'
+
+
+@app.route('/send-dataset', methods=['POST'])
+@key_required
+def send_dataset():
+    dataset_zip = request.files['data_zip']
+    dataset_name = request.form.get('dataset_name')
+
+    data_dir = DATASETS_PATH / dataset_name
+
+    try:
+        if not exists(data_dir):
+            os.makedirs(data_dir)
+
+        try:
+            with zipfile.ZipFile(dataset_zip, 'r') as img_anno_dirs:
+                img_anno_dirs.extractall(img_anno_dirs)
+        except Exception as e:
+            return f'An error occurred while extracting directories: {e}'
+
+        return f"Training dataset {dataset_name} received."
 
     except Exception as e:
         return f'An error occurred: {e}'
