@@ -121,9 +121,13 @@ def train_model():
 def get_datasets():
     datasets_info = {}
 
-    for dirname in os.listdir(DATASETS_PATH):
-        full_path = os.path.join(DATASETS_PATH, dirname)
-        modification_date = os.path.getmtime(full_path)
-        datasets_info[dirname] = time.ctime(modification_date)
+    try:
+        for dirname in os.listdir(DATASETS_PATH):
+            full_path = os.path.join(DATASETS_PATH, dirname)
+            modification_date = os.path.getmtime(full_path)
+            datasets_info[dirname] = time.ctime(modification_date)
 
-    return jsonify(datasets_info)
+        return jsonify(datasets_info)
+
+    except Exception:
+        return jsonify("No dataset.")

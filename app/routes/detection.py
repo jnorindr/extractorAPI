@@ -83,10 +83,14 @@ def delete_detect():
 def get_models():
     models_info = {}
 
-    for filename in os.listdir(MODEL_PATH):
-        if filename.endswith(".pt"):
-            full_path = os.path.join(MODEL_PATH, filename)
-            modification_date = os.path.getmtime(full_path)
-            models_info[filename] = time.ctime(modification_date)
+    try:
+        for filename in os.listdir(MODEL_PATH):
+            if filename.endswith(".pt"):
+                full_path = os.path.join(MODEL_PATH, filename)
+                modification_date = os.path.getmtime(full_path)
+                models_info[filename] = time.ctime(modification_date)
 
-    return jsonify(models_info)
+        return jsonify(models_info)
+
+    except Exception:
+        return jsonify("No model.")
