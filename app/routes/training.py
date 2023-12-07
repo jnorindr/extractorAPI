@@ -6,7 +6,7 @@ from os.path import exists
 
 from app.app import app
 from app.utils.security import key_required
-from app.utils.tasks import validate, training
+from app.utils.tasks import validate, training, save_dataset
 from app.utils.paths import DATA_PATH, DATASETS_PATH
 
 
@@ -70,30 +70,8 @@ def send_dataset():
     dataset_zip = request.files['data_zip']
     yaml_file = request.files['yaml_file']
 
-    dataset_name = yaml_file.filename.replace('.yaml', '')
-    data_dir = DATASETS_PATH / dataset_name
-    yaml_file_path = DATA_PATH / f"{dataset_name}.yaml"
-
-    try:
-        if not exists(data_dir):
-            os.makedirs(data_dir)
-
-        try:
-            with zipfile.ZipFile(dataset_zip, 'r') as img_anno_dirs:
-                img_anno_dirs.extractall(img_anno_dirs)
-        except Exception as e:
-            return f'An error occurred while extracting directories: {e}'
-
-        try:
-            with open(yaml_file_path, 'w') as yaml:
-                yaml.write(yaml_file.read().decode('utf-8'))
-        except Exception as e:
-            return f'An error occurred while writing YAML file: {e}'
-
-        return f"Training dataset {dataset_name} received."
-
-    except Exception as e:
-        return f'An error occurred: {e}'
+    save_dataset.delay(dataset_zip, yaml_file)
+    return f'Downloading dataset with Celery!'
 
 
 @app.route('/test-model', methods=['POST'])

@@ -3,11 +3,12 @@ from app.app import celery
 import os
 import requests
 import shutil
+import zipfile
 from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
-from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH
 from app.utils.logger import log
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
@@ -111,6 +112,34 @@ def training(model, data):
         )
 
         return f"Trained model {model} with {data} dataset."
+
+    except Exception as e:
+        return f'An error occurred: {e}'
+
+
+@celery.task
+def save_dataset(dataset_zip, yaml_file):
+    dataset_name = yaml_file.filename.replace('.yaml', '')
+    data_dir = DATASETS_PATH / dataset_name
+    yaml_file_path = DATA_PATH / f"{dataset_name}.yaml"
+
+    try:
+        if not exists(data_dir):
+            os.makedirs(data_dir)
+
+        try:
+            with zipfile.ZipFile(dataset_zip, 'r') as img_anno_dirs:
+                img_anno_dirs.extractall(img_anno_dirs)
+        except Exception as e:
+            return f'An error occurred while extracting directories: {e}'
+
+        try:
+            with open(yaml_file_path, 'w') as yaml:
+                yaml.write(yaml_file.read().decode('utf-8'))
+        except Exception as e:
+            return f'An error occurred while writing YAML file: {e}'
+
+        return f"Training dataset {dataset_name} received."
 
     except Exception as e:
         return f'An error occurred: {e}'
