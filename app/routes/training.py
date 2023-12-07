@@ -71,29 +71,21 @@ def send_dataset():
     yaml_file = request.files['yaml_file']
 
     dataset_name = yaml_file.filename.replace('.yaml', '')
-    data_dir = DATASETS_PATH / dataset_name
     yaml_file_path = DATA_PATH / f"{dataset_name}.yaml"
 
     try:
-        if not exists(data_dir):
-            os.makedirs(data_dir)
-
-        try:
-            with zipfile.ZipFile(dataset_zip, 'r') as img_anno_dirs:
-                img_anno_dirs.extractall(data_dir)
-        except Exception as e:
-            return f'An error occurred while extracting directories: {e}'
-
-        try:
-            with open(yaml_file_path, 'w') as yaml:
-                yaml.write(yaml_file.read().decode('utf-8'))
-        except Exception as e:
-            return f'An error occurred while writing YAML file: {e}'
-
-        return f"Training dataset {dataset_name} received."
-
+        with zipfile.ZipFile(dataset_zip, 'r') as img_anno_dirs:
+            img_anno_dirs.extractall(DATASETS_PATH)
     except Exception as e:
-        return f'An error occurred: {e}'
+        return f'An error occurred while extracting directories: {e}'
+
+    try:
+        with open(yaml_file_path, 'w') as yaml:
+            yaml.write(yaml_file.read().decode('utf-8'))
+    except Exception as e:
+        return f'An error occurred while writing YAML file: {e}'
+
+    return f"Training dataset {dataset_name} received."
 
 
 @app.route('/test-model', methods=['POST'])
