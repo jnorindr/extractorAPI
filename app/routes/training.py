@@ -68,9 +68,11 @@ def send_data():
 @key_required
 def send_dataset():
     dataset_zip = request.files['data_zip']
-    dataset_name = request.form.get('dataset_name')
+    yaml_file = request.files['yaml_file']
 
+    dataset_name = yaml_file.filename.replace('.yaml', '')
     data_dir = DATASETS_PATH / dataset_name
+    yaml_file_path = DATA_PATH / f"{dataset_name}.yaml"
 
     try:
         if not exists(data_dir):
@@ -81,6 +83,12 @@ def send_dataset():
                 img_anno_dirs.extractall(img_anno_dirs)
         except Exception as e:
             return f'An error occurred while extracting directories: {e}'
+
+        try:
+            with open(yaml_file_path, 'w') as yaml:
+                yaml.write(yaml_file.read().decode('utf-8'))
+        except Exception as e:
+            return f'An error occurred while writing YAML file: {e}'
 
         return f"Training dataset {dataset_name} received."
 
