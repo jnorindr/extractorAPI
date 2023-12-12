@@ -13,7 +13,7 @@ LOG_DIR = "logs"
 DATA_DIR = "data"
 DATASETS_DIR = "datasets"
 
-DEFAULT_MODEL = "yolo_last_sved_vhs_sullivan.pt"
+DEFAULT_MODEL = "best_eida.pt"
 
 IMG_PATH = Path(f"{API_ROOT}/{APP_DIR}/{IMG_DIR}")
 ANNO_PATH = Path(f"{API_ROOT}/{APP_DIR}/{ANNO_DIR}")
