@@ -2,6 +2,7 @@ from app.app import celery
 
 import os
 import requests
+import time
 import shutil
 from datetime import datetime, timedelta
 from celery.schedules import crontab
@@ -42,6 +43,7 @@ def detect(manifest_url, model=None, callback=None):
     downloader.run()
 
     model = DEFAULT_MODEL if model is None else model
+    weights = f"{MODEL_PATH}/{model}"
 
     digit_dir = downloader.get_dir_name()
     digit_ref = downloader.manifest_id  # TODO check if it really "{wit_abbr}{wit_id}_{digit_abbr}{digit_id}
@@ -65,7 +67,7 @@ def detect(manifest_url, model=None, callback=None):
     for i, img in enumerate(sorted(os.listdir(digit_path)), 1):
         log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
         run_vhs(
-            weights=f"{MODEL_PATH}/{model}",
+            weights=weights,
             source=digit_path / img,
             anno_file=anno_file,
             img_nb=i
@@ -77,11 +79,11 @@ def detect(manifest_url, model=None, callback=None):
 
         requests.post(
             url=f"{callback}/{digit_ref}" if callback else f"{ENV.str('CLIENT_APP_URL')}/annotate/{digit_ref}",
-            files={"annotation_file": annotation_file},
-            model=f"{model}"
+            files={"annotation_file": annotation_file,
+                   "model": f"{anno_model}_{time.strftime('%m_%Y', time.gmtime(os.path.getmtime(weights)))}"}
         )
 
-        return f'Annotations sent to {callback}'
+        return f"Annotations from {anno_model} sent to {callback}"
     except Exception as e:
         return f'An error occurred: {e}'
 
