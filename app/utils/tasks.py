@@ -77,7 +77,8 @@ def detect(manifest_url, model=None, callback=None):
 
         requests.post(
             url=f"{callback}/{digit_ref}" if callback else f"{ENV.str('CLIENT_APP_URL')}/annotate/{digit_ref}",
-            files={"annotation_file": annotation_file}
+            files={"annotation_file": annotation_file},
+            model=f"{model}"
         )
 
         return f'Annotations sent to {callback}'
