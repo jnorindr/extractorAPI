@@ -104,8 +104,9 @@ def test_model():
 def train_model():
     model = request.form.get('model')
     data = request.form.get('data')
+    hyp = request.form.get('hyp')
 
-    training.delay(model, data)
+    training.delay(model, data, hyp)
     return f"Training task triggered with Celery!"
 
 
