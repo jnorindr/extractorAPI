@@ -105,18 +105,13 @@ def validate(model, data, name):
 
 
 @celery.task
-def training(model, data, hyp):
-    if hyp == 'high':
-        param = f"{DATA_PATH}/hyps/hyp.scratch-high.yaml"
-    else:
-        None
-
+def training(model, data, epochs):
     try:
         train.run(
             weights=f"{MODEL_PATH}/{model}",
             data=f"{DATA_PATH}/{data}.yaml",
             imgsz=320,
-            hyp=param,
+            epochs=int(epochs),
         )
 
         return f"Trained model {model} with {data} dataset."
