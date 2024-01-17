@@ -93,9 +93,9 @@ def send_dataset():
 def test_model():
     model = request.form.get('model')
     dataset = request.form.get('dataset')
-    name = request.form.get('name')
+    save_dir = request.form.get('save_dir')
 
-    test.delay(model, dataset, name)
+    test.delay(model, dataset, save_dir)
     return f"Detection testing task triggered with Celery!"
 
 

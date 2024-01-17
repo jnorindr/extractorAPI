@@ -1,3 +1,5 @@
+import cv2
+
 from app.app import celery
 
 import os
@@ -90,15 +92,68 @@ def detect(manifest_url, model=None, callback=None):
 
 
 @celery.task
-def test(model, dataset, name):
+def test(model, dataset, save_dir):
+    project = f"{DATASETS_PATH}/{dataset}/{save_dir}"
+    name = "annotated_images_auto"
+    annotated_img_dir = f"{project}/{name}/"
+    annotations_dir = f"{DATASETS_PATH}/{dataset}/labels/test/"
+    output_dir = f"{project}/comparative_images/"
+
     try:
         run_yolov5(
             weights=f"{MODEL_PATH}/{model}",
             source=f"{DATASETS_PATH}/{dataset}/images/test",
-            name=f"{name}",
+            project=project,
+            name=name,
         )
 
-        return f"Tested model {model} with {dataset} dataset."
+    except Exception as e:
+        return f'An error occurred: {e}'
+
+    try:
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        for image_file in os.listdir(annotated_img_dir):
+            if image_file.endswith(".jpg") or image_file.endswith(".JPG"):
+                image_path = os.path.join(annotated_img_dir, image_file)
+                img = cv2.imread(image_path)
+
+                if img is None:
+                    log("[test_model] Error: Failed to load image", image_path)
+                    continue
+
+                annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
+                annotation_path = os.path.join(annotations_dir, annotation_file)
+                if not os.path.exists(annotation_path):
+                    # log("[test_model] Error: Failed to load image", image_path)
+                    continue
+
+                with open(annotation_path, "r") as f:
+                    annotations = f.readlines()
+
+                # Parse the annotations to extract the bounding box coordinates and class labels
+                for annotation in annotations:
+                    class_label, x, y, w, h = annotation.strip().split()
+                    x, y, w, h = map(float, [x, y, w, h])
+
+                    # Convert the normalized coordinates to pixel coordinates
+                    x, y, w, h = x * img.shape[1], y * img.shape[0], w * img.shape[1], h * img.shape[0]
+
+                    # Compute the bounding box coordinates
+                    xmin, ymin, xmax, ymax = int(x - w / 2), int(y - h / 2), int(x + w / 2), int(y + h / 2)
+
+                    # Draw the bounding boxes on the image
+                    cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
+
+                    # Add the class labels to the bounding boxes
+                    cv2.putText(img, "ground truth", (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
+
+                # Save the annotated image to the output folder
+                output_path = os.path.join(output_dir, image_file)
+                cv2.imwrite(output_path, img)
+
+        return f"Annotations plotted on images and saved to {output_dir}"
 
     except Exception as e:
         return f'An error occurred: {e}'
@@ -112,6 +167,7 @@ def training(model, data, epochs):
             data=f"{DATA_PATH}/{data}.yaml",
             imgsz=320,
             epochs=int(epochs),
+            name=f"{data}_{epochs}"
         )
 
         return f"Trained model {model} with {data} dataset."
