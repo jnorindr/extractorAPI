@@ -39,8 +39,7 @@ CREATE TABLE table_name(
 ```
 Add an app and its key to the database
 ```
-INSERT INTO table_name [(id, app_name, app_key)]
-VALUES (value, value2, value3);
+INSERT INTO table_name VALUES ('value', 'value2', 'value3');
 ```
 Exit the SQLite shell
 ```
