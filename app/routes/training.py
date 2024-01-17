@@ -6,7 +6,7 @@ from os.path import exists
 
 from app.app import app
 from app.utils.security import key_required
-from app.utils.tasks import validate, training
+from app.utils.tasks import training, test
 from app.utils.paths import DATA_PATH, DATASETS_PATH
 
 
@@ -92,11 +92,11 @@ def send_dataset():
 @key_required
 def test_model():
     model = request.form.get('model')
-    data = request.form.get('data')
+    dataset = request.form.get('dataset')
     name = request.form.get('name')
 
-    validate.delay(model, data, name)
-    return f"Validation task triggered with Celery!"
+    test.delay(model, dataset, name)
+    return f"Detection testing task triggered with Celery!"
 
 
 @app.route('/train-model', methods=['POST'])

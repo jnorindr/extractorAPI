@@ -8,11 +8,12 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
-from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH
 from app.utils.logger import log
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
-from app.yolov5 import val, train
+from app.yolov5.detect import run as run_yolov5
+from app.yolov5 import train
 
 
 @celery.task
@@ -89,16 +90,15 @@ def detect(manifest_url, model=None, callback=None):
 
 
 @celery.task
-def validate(model, data, name):
+def test(model, dataset, name):
     try:
-        val.run(
+        run_yolov5(
             weights=f"{MODEL_PATH}/{model}",
-            data=f"{DATA_PATH}/{data}.yaml",
+            source=f"{DATASETS_PATH}/{dataset}/images/test",
             name=f"{name}",
-            task='test'
         )
 
-        return f"Validated model {model} with {data} dataset."
+        return f"Tested model {model} with {dataset} dataset."
 
     except Exception as e:
         return f'An error occurred: {e}'
