@@ -97,7 +97,6 @@ def test(model, dataset, save_dir):
     name = "annotated_images_auto"
     annotated_img_dir = f"{project}/{name}/"
     annotations_dir = f"{DATASETS_PATH}/{dataset}/labels/test/"
-    images_dir = f"{DATASETS_PATH}/{dataset}/images/test/"
     output_dir = f"{project}/comparative_images/"
     neg_output_dir = f"{project}/comparative_images/false_negatives"
 
@@ -155,12 +154,12 @@ def test(model, dataset, save_dir):
                 output_path = os.path.join(output_dir, image_file)
                 cv2.imwrite(output_path, img)
 
-        for image_file in os.listdir(images_dir):
-            image_path = os.path.join(images_dir, image_file)
+        for image_file in os.listdir(annotated_img_dir):
+            image_path = os.path.join(annotated_img_dir, image_file)
             annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
             annotation_path = os.path.join(annotations_dir, annotation_file)
 
-            if image_file not in os.listdir(output_dir) and os.path.exists(annotation_path):
+            if os.path.exists(annotation_path) and image_file not in os.listdir(output_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
@@ -192,7 +191,7 @@ def test(model, dataset, save_dir):
                 neg_output_path = os.path.join(neg_output_dir, image_file)
                 cv2.imwrite(neg_output_path, img)
 
-        return f"Annotations plotted on images and saved to {output_dir}"
+        return f"Annotations plotted on images and saved to {output_dir}, no gt : {n}"
 
     except Exception as e:
         return f'An error occurred: {e}'

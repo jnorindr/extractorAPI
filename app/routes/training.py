@@ -96,7 +96,7 @@ def test_model():
     save_dir = request.form.get('save_dir')
 
     test.delay(model, dataset, save_dir)
-    return f"Detection testing task triggered with Celery!"
+    return f"Testing task triggered with Celery!"
 
 
 @app.route('/train-model', methods=['POST'])
