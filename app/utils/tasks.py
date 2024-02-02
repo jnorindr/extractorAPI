@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
+from app.utils import sanitize_str
 from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH
 from app.utils.logger import log
 from app.iiif.iiif_downloader import IIIFDownloader
@@ -52,7 +53,7 @@ def detect(manifest_url, model=None, callback=None):
     digit_ref = downloader.manifest_id  # TODO check if it really "{wit_abbr}{wit_id}_{digit_abbr}{digit_id}
     anno_model = model.split('.')[0]
 
-    anno_dir = ANNO_PATH / anno_model
+    anno_dir = ANNO_PATH / anno_model / sanitize_str(manifest_url.split('/')[2])
     if not exists(anno_dir):
         # create all necessary parent directories
         os.makedirs(anno_dir)

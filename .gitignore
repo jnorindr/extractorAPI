@@ -3,9 +3,7 @@ env/
 .env
 .idea/
 __pycache__/
-/app/img/
-/app/annotation/
-/app/manifests/
+mediafiles/
 logs/
 celerybeat-schedule
 *.db
