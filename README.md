@@ -26,25 +26,31 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 #### API Keys Database
+
 Create a SQLite database at the root of the API repository to store API keys
-```
-sqlite3 DatabaseName.db
-```
-```
-CREATE TABLE table_name(
-   id INT PRIMARY KEY NOT NULL,
+```shell
+DB_NAME="<db_name>" && sqlite3 $DB_NAME.db <<EOF
+CREATE TABLE app (
+   id INTEGER PRIMARY KEY AUTOINCREMENT,
    app_name CHAR(50) NOT NULL,
    app_key CHAR(80) NOT NULL
 );
+EOF
 ```
 Add an app and its key to the database
+```bash
+APP_KEY="$(openssl rand -base64 32 | tr -d '/\n')" && sqlite3 $DB_NAME.db <<EOF
+INSERT INTO app (app_name, app_key) VALUES ('<your_app_name>', '$APP_KEY');
+EOF
 ```
-INSERT INTO table_name VALUES ('value', 'value2', 'value3');
+
+Show content of the `app` table:
+```bash
+sqlite3 -header -column $DB_NAME.db <<EOF
+SELECT * FROM app;
+EOF
 ```
-Exit the SQLite shell
-```
-.exit
-```
+
 #### Setting the environment variables
 Copy the content of the template file
 ```bash
@@ -103,4 +109,27 @@ curl -X POST -H "X-API-Key: <api-key>" -F manifest_url='<url-manifest>' model='<
 ```
 ```shell
 curl -X POST -H "X-API-Key: <api-key>" -F url_file=@iiif/test-manifests.txt model='<filename>' http://127.0.0.1:5000/detect_all
+```
+
+## Compute similarity
+```shell
+APP_NAME="<your_app_name>"
+```
+
+```shell
+# Get API_KEY
+API_KEY=$(sqlite3 $DB_NAME.db <<EOF
+SELECT app_key FROM app WHERE app_name = '$APP_NAME';
+EOF
+)
+```
+
+```shell
+curl -X POST -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" -d '{
+    "documents": {
+        "doc1_id": "doc1_url",
+        "doc2_id": "doc2_url",
+        "doc3_id": "doc3_url",
+    }
+}' http://127.0.0.1:5000/run_similarity
 ```
