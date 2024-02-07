@@ -8,7 +8,7 @@ import requests
 from urllib.parse import urlparse
 
 from app.utils import check_and_create_if_not, sanitize_str, sanitize_url
-from app.utils.logger import console, log
+from app.utils.logger import console
 from app.utils.paths import IMG_PATH
 
 

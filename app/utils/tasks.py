@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 from app.app import celery
 
@@ -11,8 +12,8 @@ from celery.schedules import crontab
 from os.path import exists
 
 from app.utils import sanitize_str
-from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH
-from app.utils.logger import log
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, LOG_PATH
+from app.utils.logger import console, get_time
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
 from app.yolov5.detect import run as run_yolov5
@@ -31,12 +32,35 @@ def delete_images():
                 shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
 
 
+@celery.task
+def empty_logs():
+    two_weeks_ago = datetime.now() - timedelta(weeks=2)
+    if os.path.exists(LOG_PATH):
+        with open(LOG_PATH, 'r') as log_file:
+            lines = log_file.readlines()
+
+        for line_nb, line in enumerate(lines):
+            try:
+                log_date = datetime.strptime(line[:10], "%Y-%m-%d")
+                if log_date > two_weeks_ago:
+                    break
+            except ValueError:
+                pass  # Ignore lines without a date
+
+        with open(LOG_PATH, 'w') as log_file:
+            log_file.writelines(lines[line_nb:])
+
+
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Periodic task setting for image deletion
     sender.add_periodic_task(
         crontab(hour=2, minute=0),
         delete_images.s()
+    )
+    sender.add_periodic_task(
+        crontab(hour=2, minute=0),
+        empty_logs.s(),
     )
 
 
@@ -64,12 +88,12 @@ def detect(manifest_url, model=None, callback=None):
         # If annotations are generated again, empty annotation file
         open(anno_file, 'w').close()
 
-    log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️\x1b[0m\n\n")
+    console(f"DETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️")
     digit_path = IMG_PATH / digit_dir
 
     # For number and images in the witness images directory, run detection
     for i, img in enumerate(sorted(os.listdir(digit_path)), 1):
-        log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
+        console(f"====> Processing {img} 🔍")
         run_vhs(
             weights=weights,
             source=digit_path / img,
@@ -122,13 +146,12 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    log("[test_model] Error: Failed to load image", image_path)
+                    console(f"[test_model] Error: Failed to load image {image_path}", "error")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
                 annotation_path = os.path.join(annotations_dir, annotation_file)
                 if not os.path.exists(annotation_path):
-                    # log("[test_model] Error: Failed to load image", image_path)
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -164,7 +187,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    log("[test_model_false_neg] Error: Failed to load image", image_path)
+                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", "error")
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -192,7 +215,7 @@ def test(model, dataset, save_dir):
                 neg_output_path = os.path.join(neg_output_dir, image_file)
                 cv2.imwrite(neg_output_path, img)
 
-        return f"Annotations plotted on images and saved to {output_dir}, no gt : {n}"
+        return f"Annotations plotted on images and saved to {output_dir}"  #, no gt : {n}"
 
     except Exception as e:
         return f'An error occurred: {e}'

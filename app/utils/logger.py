@@ -2,7 +2,7 @@ import logging
 import time
 
 from app.utils.paths import ENV, LOG_PATH
-from app.utils import pprint, check_and_create_if_not
+from app.utils import pprint
 
 DEBUG = ENV.list("DEBUG")
 
@@ -13,9 +13,9 @@ class TerminalColors:
     OKGREEN = "\033[92m"
     WARNING = "\033[93m"
     FAIL = "\033[91m"
-    ENDC = "\033[0m"
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
+    ENDC = "\033[0m"
 
 
 def get_time():
@@ -33,33 +33,13 @@ def get_color(msg_type=None):
 def console(msg="🚨🚨🚨", msg_type=None):
     msg = f"\n\n\n{get_time()}\n{get_color(msg_type)}{TerminalColors.BOLD}{pprint(msg)}{TerminalColors.ENDC}\n\n\n"
 
-    if not DEBUG:
-        log(msg)
-        return
+    logger = logging.getLogger("exapi")
+    file_handler = logging.FileHandler(LOG_PATH)
+    logger.addHandler(file_handler)
 
-    logger = logging.getLogger("django")
     if msg_type == "error":
         logger.error(msg)
     elif msg_type == "warning":
         logger.warning(msg)
     else:
         logger.info(msg)
-
-
-def log(msg, color=TerminalColors.OKBLUE):
-    """
-    Record an error message in the system log
-    """
-    import logging
-    import traceback
-
-    trace = traceback.format_exc()
-    if trace == "NoneType: None\n":
-        # trace = traceback.extract_stack(limit=10)
-        trace = ""
-
-    check_and_create_if_not(LOG_PATH)
-
-    # Create a logger instance
-    logger = logging.getLogger("django")
-    logger.error(f"\n{pprint(msg)}\n{trace}\n")
