@@ -25,6 +25,7 @@ DATA_PATH = Path(f"{API_ROOT}/{APP_DIR}/{YOLO_DIR}/{DATA_DIR}")
 DATASETS_PATH = Path(f"{DATA_PATH}/{DATASETS_DIR}")
 
 LOG_PATH = Path(f"{API_ROOT}/{LOG_DIR}/api_logs.log")
+IMG_LOG = Path(f"{API_ROOT}/{LOG_DIR}/img.log")
 
 ENV = environ.Env()
 environ.Env.read_env(env_file=f"{API_ROOT}/.env")

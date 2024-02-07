@@ -204,7 +204,7 @@ class IIIFDownloader:
             img.save(self.manifest_dir_path / img_filename)
             return True
         except Exception as e:
-            log(f"{error_msg}:\n{e}")
+            console(f"{error_msg}:\n{e}", "error")
         return False
 
     def get_manifest_id(self, manifest):

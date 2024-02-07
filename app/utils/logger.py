@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 
 from app.utils.paths import ENV, LOG_PATH
@@ -43,3 +44,12 @@ def console(msg="🚨🚨🚨", msg_type=None):
         logger.warning(msg)
     else:
         logger.info(msg)
+
+
+def log_failed_img(img_name, img_url):
+    if not os.path.isfile(IMG_LOG):
+        f = open(IMG_LOG, "x")
+        f.close()
+
+    with open(IMG_LOG, "a") as f:
+        f.write(f"{img_name} {img_url}\n")

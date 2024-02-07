@@ -11,9 +11,12 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
+from app.similarity.const import SCORES_PATH
+from app.similarity.similarity import compute_seg_pairs
+from app.similarity.utils import is_downloaded, download_images, doc_pairs, hash_pair
 from app.utils import sanitize_str
 from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, LOG_PATH
-from app.utils.logger import console, get_time
+from app.utils.logger import console
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
 from app.yolov5.detect import run as run_yolov5
@@ -24,6 +27,7 @@ from app.yolov5 import train
 def delete_images():
     # Function to delete images after a week
     week_ago = datetime.now() - timedelta(days=7)
+    # TODO delete images from similarity as well
     for ms_dir in os.listdir(IMG_PATH):
         dir_path = os.path.join(IMG_PATH, ms_dir)
         if os.path.isdir(dir_path):
@@ -113,7 +117,7 @@ def detect(manifest_url, model=None, callback=None):
 
         return f"Annotations from {anno_model} sent to {callback}"
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred: {e}', "error")
 
 
 @celery.task
@@ -134,7 +138,7 @@ def test(model, dataset, save_dir):
         )
 
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred: {e}', "error")
 
     try:
         if not os.path.exists(neg_output_dir):
@@ -218,7 +222,7 @@ def test(model, dataset, save_dir):
         return f"Annotations plotted on images and saved to {output_dir}"  #, no gt : {n}"
 
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred: {e}', "error")
 
 
 @celery.task
@@ -235,4 +239,50 @@ def training(model, data, epochs):
         return f"Trained model {model} with {data} dataset."
 
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred: {e}', "error")
+
+
+@celery.task
+def similarity(documents, model, callback):
+    """
+    E.g.
+    documents = {
+        "wit3_man186_anno181": 'https://eida.obspm.fr/eida/wit3_man186_anno181/list/',
+        "wit87_img87_anno87": 'https://eida.obspm.fr/eida/wit87_img87_anno87/list/',
+        "wit2_img2_anno2": 'https://eida.obspm.fr/eida/wit2_img2_anno2/list/'
+    }
+    """
+
+    doc_ids = []
+    for doc_id, url in documents.items():
+        doc_ids.append(doc_id)
+        # TODO check first if features were computed + use of model
+        if not is_downloaded(doc_id):
+            download_images(url, doc_id)
+            # TODO here compute features
+
+    npy_pairs = {}
+    for doc_pair in doc_pairs(doc_ids):
+        hashed_pair = hash_pair(doc_pair)
+        pair_score = SCORES_PATH / f"{hashed_pair}.npy"
+        if not os.path.exists(pair_score):
+            compute_seg_pairs(doc_pair, hashed_pair)
+
+        npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", open(pair_score, 'rb'))
+
+    #     # TODO compute total score on frontend platform
+    #     for img in get_imgs_in_dirs(get_doc_dirs(doc_pair)):
+    #         if img not in total_scores:
+    #             total_scores[img] = []
+    #         total_scores[img].extend(best_matches(seg_pairs, img, doc_pair))
+    #
+    # sorted_scores = {q_img: sorted(sim, key=lambda x: x[0], reverse=True) for q_img, sim in total_scores.items()}
+
+    try:
+        requests.post(
+            url=f"{callback}",
+            files=npy_pairs,
+        )
+        return console(f"Successfully send scores for {doc_ids}")
+    except Exception as e:
+        console(f'An error occurred: {e}', "error")
