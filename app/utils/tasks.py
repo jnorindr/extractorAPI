@@ -117,7 +117,7 @@ def detect(manifest_url, model=None, callback=None):
 
         return f"Annotations from {anno_model} sent to {callback}"
     except Exception as e:
-        console(f'An error occurred: {e}', "error")
+        console(f'An error occurred', error=e)
 
 
 @celery.task
@@ -138,7 +138,7 @@ def test(model, dataset, save_dir):
         )
 
     except Exception as e:
-        console(f'An error occurred: {e}', "error")
+        console(f'An error occurred', error=e)
 
     try:
         if not os.path.exists(neg_output_dir):
@@ -150,7 +150,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model] Error: Failed to load image {image_path}", "error")
+                    console(f"[test_model] Error: Failed to load image {image_path}", "red")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
@@ -191,7 +191,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", "error")
+                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", "red")
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -222,7 +222,7 @@ def test(model, dataset, save_dir):
         return f"Annotations plotted on images and saved to {output_dir}"  #, no gt : {n}"
 
     except Exception as e:
-        console(f'An error occurred: {e}', "error")
+        console(f'An error occurred', error=e)
 
 
 @celery.task
@@ -239,7 +239,7 @@ def training(model, data, epochs):
         return f"Trained model {model} with {data} dataset."
 
     except Exception as e:
-        console(f'An error occurred: {e}', "error")
+        console(f'An error occurred', error=e)
 
 
 @celery.task
@@ -264,11 +264,11 @@ def similarity(documents, model=FEAT_NET, callback=None):
     npy_pairs = {}
     for doc_pair in doc_pairs(doc_ids):
         hashed_pair = hash_pair(doc_pair)
-        pair_score = SCORES_PATH / f"{hashed_pair}.npy"
-        if not os.path.exists(pair_score):
+        score_file = SCORES_PATH / f"{hashed_pair}.npy"
+        if not os.path.exists(score_file):
             compute_seg_pairs(doc_pair, hashed_pair)
 
-        npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", open(pair_score, 'rb'))
+        npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", open(score_file, 'rb'))
 
     #     # TODO compute total score on frontend platform
     #     for img in get_imgs_in_dirs(get_doc_dirs(doc_pair)):
@@ -287,4 +287,4 @@ def similarity(documents, model=FEAT_NET, callback=None):
             )
         return console(f"Successfully send scores for {doc_ids}")
     except Exception as e:
-        console(f'An error occurred: {e}', "error")
+        console(f'An error occurred', error=e)

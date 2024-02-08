@@ -11,6 +11,7 @@ from sklearn.cluster import KMeans
 from app.similarity.const import FEATS_PATH
 from app.similarity.utils import get_model_path
 from app.similarity.vit import VisionTransformer
+from app.utils.logger import console
 
 
 def extract_features(data_loader, device, feat_layer, feat_set, feat_net, hash_doc_pair):
@@ -21,6 +22,7 @@ def extract_features(data_loader, device, feat_layer, feat_set, feat_net, hash_d
     with torch.no_grad():
         feat_path = f"{FEATS_PATH}/{hash_doc_pair}.pt"
         if os.path.exists(feat_path):
+            console(f"Load already computed features {hash_doc_pair}", "green")
             return torch.load(feat_path, map_location=device)
 
         model_path = get_model_path(feat_net)

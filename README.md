@@ -182,3 +182,9 @@ curl -X POST -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" -d '{
     "model": "dino_vitbase8_pretrain"
 }' http://127.0.0.1:$API_PORT/run_similarity
 ```
+
+
+curl -X POST -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" -d '{
+    "documents": {"wit3_man186_anno181": "https://eida.obspm.fr/eida/wit3_man186_anno181/list/"},
+    "model": "dino_vitbase8_pretrain"
+}' http://127.0.0.1:$API_PORT/run_similarity

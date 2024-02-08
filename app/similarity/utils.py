@@ -109,7 +109,7 @@ def save_img(
         img.save(img_path / f"{filename}.jpg", format=img_format)
         return img
     except Exception as e:
-        console(f"Failed to save img as JPEG {e}", "error")
+        console(f"Failed to save img as JPEG", error=e)
         return False
 
 
@@ -134,7 +134,7 @@ def doc_pairs(doc_ids: list):
     raise ValueError("Input must be a non-empty list of ids.")
 
 def download_img(img_url, doc_id, img_name):
-    doc_dir = DOC_PATH / doc_id
+    doc_dir = f"{DOC_PATH}/{doc_id}"
     try:
         with requests.get(img_url, stream=True) as response:
             response.raw.decode_content = True
@@ -147,7 +147,7 @@ def download_img(img_url, doc_id, img_name):
             f"{doc_dir}/{img_name}",
         )
         log_failed_img(img_name, img_url)
-        console(f"[download_img] {img_url} is not a valid img file\n{e}")
+        console(f"[download_img] {img_url} is not a valid img file", error=e)
 
 
 def download_images(url, doc_id):

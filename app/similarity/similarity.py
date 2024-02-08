@@ -109,15 +109,29 @@ def segswap_similarity(cos_pairs, output_file=None):
             scores_npy = np.vstack([scores_npy, pair_score])
 
     if output_file:
-        np.save(SCORES_PATH / f"{output_file}.npy", scores_npy)
+        try:
+            np.save(SCORES_PATH / f"{output_file}.npy", scores_npy)
+        except Exception as e:
+            console(f"Failed to save {output_file}.npy", error=e)
 
     return scores_npy
 
 
 def compute_seg_pairs(doc_pair, hashed_pair):
     console(f"COMPUTING SIMILARITY FOR {doc_pair} 🖇️")
-    cos_pairs = cosine_similarity(doc_pair)
-    # Reshape to group pairs for same query img
-    # cos_pairs = cos_pairs.reshape(-1, COS_TOPK, cos_pairs.shape[1])
-    seg_pairs = segswap_similarity(cos_pairs, output_file=hashed_pair)
+    try:
+        console(f"Computing cosine scores for {doc_pair} 🖇️", "cyan")
+        cos_pairs = cosine_similarity(doc_pair)
+        # Reshape to group pairs for same query img
+        # cos_pairs = cos_pairs.reshape(-1, COS_TOPK, cos_pairs.shape[1])
+    except Exception as e:
+        console(f"Error when computing cosine similarity", error=e)
+        return
+
+    try:
+        console(f"Computing segswap scores for {doc_pair} 🖇️", "cyan")
+        seg_pairs = segswap_similarity(cos_pairs, output_file=hashed_pair)
+    except Exception as e:
+        console(f"Error when computing segswap scores", error=e)
+        return
     return seg_pairs
