@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
-from app.similarity.const import SCORES_PATH
+from app.similarity.const import SCORES_PATH, FEAT_NET
 from app.similarity.similarity import compute_seg_pairs
 from app.similarity.utils import is_downloaded, download_images, doc_pairs, hash_pair
 from app.utils import sanitize_str
@@ -243,7 +243,7 @@ def training(model, data, epochs):
 
 
 @celery.task
-def similarity(documents, model, callback):
+def similarity(documents, model=FEAT_NET, callback=None):
     """
     E.g.
     documents = {
@@ -279,10 +279,11 @@ def similarity(documents, model, callback):
     # sorted_scores = {q_img: sorted(sim, key=lambda x: x[0], reverse=True) for q_img, sim in total_scores.items()}
 
     try:
-        requests.post(
-            url=f"{callback}",
-            files=npy_pairs,
-        )
+        if callback:
+            requests.post(
+                url=f"{callback}",
+                files=npy_pairs,
+            )
         return console(f"Successfully send scores for {doc_ids}")
     except Exception as e:
         console(f'An error occurred: {e}', "error")

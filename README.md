@@ -57,66 +57,78 @@ Copy the content of the template file
 cp .env{.template,}
 ```
 Change the content according to your Celery backend, client app and API keys database
-```
-CELERY_BROKER_URL="redis://:<redis-password>@<localhost-port>/0"
+```bash
+CELERY_BROKER_URL="redis://localhost:6379" 
 DEBUG=True
-CLIENT_APP_URL="<url>"
-SQLALCHEMY_DATABASE_URI=sqlite:////<database-path>
+CLIENT_APP_URL="<url-of-front-app-connected-to-API>"
+SQLALCHEMY_DATABASE_URI=sqlite:////<path/to/$DB_NAME.db>
 ```
-If you want to use the API for training and use Comet as a tracker, add to your `.env`:
-```
+If you want to use the API for training and use [Comet](https://www.comet.com/) as a tracker, add to your `.env`:
+```bash
 COMET_API_KEY=<comet-API-key>
 COMET_PROJECT_NAME=<project-name>
 ```
 #### Enabling authentication for Redis instance
-Open the Redis configuration file
+
+> :warning: Be sure to not override a previously defined redis password
+
+Get the path of Redis config file
+```bash
+REDIS_CONF=$(redis-cli INFO | grep config_file | awk -F: '{print $2}' | tr -d '[:space:]')
 ```
-vim /etc/redis/redis.conf
+Generate a password
+```bash
+REDIS_PSW="$(openssl rand -base64 32 | tr -d '/\n')"
 ```
-Uncomment and set a password
+Update the redis configuration
+```bash
+sudo sed -i -e "s/^requirepass [^ ]*/requirepass $REDIS_PSW/" "$REDIS_CONF"
+sudo sed -i -e "s/# requirepass [^ ]*/requirepass $REDIS_PSW/" "$REDIS_CONF"
 ```
-requirepass <your_password>
+Update the `CELERY_BROKER_URL` inside the `.env` file:
+```bash
+sed -i '' -e "s~^CELERY_BROKER_URL=.*~CELERY_BROKER_URL=\"redis://:$REDIS_PSW@localhost:6379/0\"~" .env
 ```
 Restart Redis
-```
+```bash
 sudo systemctl restart redis-server
 ```
 Test the password
-```
-redis-cli -a <your_password>
+```bash
+redis-cli -a $REDIS_PSW
 ```
 ## Run the application 
 Start Redis and Celery
-```shell
+```bash
 sudo systemctl start redis && celery -A app.app.celery worker -B -c 1 --loglevel=info -P threads
 ```
 Run the app
-```shell
+```bash
 python run.py
 ```
 ## Launch annotation :rocket:
 One manifest
-```shell
+```bash
 curl -X POST -H "X-API-Key: <api-key>" -F manifest_url='<url-manifest>' http://127.0.0.1:5000/run_detect
 ```
 Manifest list in a text file
-```shell
+```bash
 curl -X POST -H "X-API-Key: <api-key>" -F url_file=@iiif/test-manifests.txt http://127.0.0.1:5000/detect_all
 ```
 To use a different model from the default model
-```shell
+```bash
 curl -X POST -H "X-API-Key: <api-key>" -F manifest_url='<url-manifest>' model='<filename>' http://127.0.0.1:5000/run_detect
 ```
-```shell
+```bash
 curl -X POST -H "X-API-Key: <api-key>" -F url_file=@iiif/test-manifests.txt model='<filename>' http://127.0.0.1:5000/detect_all
 ```
 
 ## Compute similarity
-```shell
+```bash
 APP_NAME="<your_app_name>"
 ```
 
-```shell
+```bash
 # Get API_KEY
 API_KEY=$(sqlite3 $DB_NAME.db <<EOF
 SELECT app_key FROM app WHERE app_name = '$APP_NAME';
@@ -124,7 +136,7 @@ EOF
 )
 ```
 
-```shell
+```bash
 curl -X POST -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" -d '{
     "documents": {
         "doc1_id": "doc1_url",
