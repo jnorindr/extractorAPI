@@ -2,10 +2,9 @@
 
 extractoAPI is a tool to run on a GPU an algorithm using a model for element extraction in images.
 
-extractorAPI retrieves images from a IIIF manifest or a list of manifests and uses a vision model to extract objects from images and return annotations in text files. 
+extractorAPI retrieves images from a IIIF manifest or a list of manifests and uses a vision model to extract objects from images and return annotations in text files.
 
 ## Requirements :hammer_and_wrench:
-
 > - **Sudo** privileges
 > - **Git**
 > - **Python:** 3.10
@@ -14,19 +13,21 @@ extractorAPI retrieves images from a IIIF manifest or a list of manifests and us
 ```shell
 sudo apt-get install redis-server python3-venv python3-dev
 ```
+
 #### Repository
 ```shell
 git clone https://github.com/jnorindr/extractorAPI
 cd extractorAPI
 ```
+
 #### Python dependencies
 ```shell
 python3.10 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-#### API Keys Database
 
+#### API Keys Database
 Create a SQLite database at the root of the API repository to store API keys
 ```shell
 DB_NAME="<db_name>" && sqlite3 $DB_NAME.db <<EOF
@@ -37,13 +38,17 @@ CREATE TABLE app (
 );
 EOF
 ```
-Add an app and its key to the database
+Set an app name and its key:
 ```bash
-APP_KEY="$(openssl rand -base64 32 | tr -d '/\n')" && sqlite3 $DB_NAME.db <<EOF
-INSERT INTO app (app_name, app_key) VALUES ('<your_app_name>', '$APP_KEY');
+APP_NAME=<your_app_name>
+APP_KEY="$(openssl rand -base64 32 | tr -d '/\n')"
+```
+Add them to the database
+```bash
+sqlite3 $DB_NAME.db <<EOF
+INSERT INTO app (app_name, app_key) VALUES ('$APP_NAME', '$APP_KEY');
 EOF
 ```
-
 Show content of the `app` table:
 ```bash
 sqlite3 -header -column $DB_NAME.db <<EOF
@@ -58,18 +63,26 @@ cp .env{.template,}
 ```
 Change the content according to your Celery backend, client app and API keys database
 ```bash
-CELERY_BROKER_URL="redis://localhost:6379" 
+CELERY_BROKER_URL="redis://localhost:<redis-port>" # default port: 6379
+APP_PORT=<api-port> # default port: 5000
 DEBUG=True
 CLIENT_APP_URL="<url-of-front-app-connected-to-API>"
-SQLALCHEMY_DATABASE_URI=sqlite:////<path/to/$DB_NAME.db>
+SQLALCHEMY_DATABASE_URI=sqlite:///</absolute/path/to/$DB_NAME.db>
 ```
+[//]: # (If you use another port than `6379` for Redis &#40;e.g. multiple celery instances on the same server&#41;, update the `redis.conf`:)
+[//]: # (```bash)
+[//]: # (REDIS_PORT=<redis-port>)
+[//]: # (REDIS_CONF=$&#40;redis-cli INFO | grep config_file | awk -F: '{print $2}' | tr -d '[:space:]'&#41;)
+[//]: # (sudo sed -i -e "/^port 6379/a\port $REDIS_PORT" "$REDIS_CONF" # append new port to listen to)
+[//]: # (sudo systemctl restart redis)
+[//]: # (```)
 If you want to use the API for training and use [Comet](https://www.comet.com/) as a tracker, add to your `.env`:
 ```bash
 COMET_API_KEY=<comet-API-key>
 COMET_PROJECT_NAME=<project-name>
 ```
-#### Enabling authentication for Redis instance
 
+#### Enabling authentication for Redis instance
 > :warning: Be sure to not override a previously defined redis password
 
 Get the path of Redis config file
@@ -97,15 +110,25 @@ Test the password
 ```bash
 redis-cli -a $REDIS_PSW
 ```
-## Run the application 
-Start Redis and Celery
+
+## Run the application
+If not already, start redis:
 ```bash
-sudo systemctl start redis && celery -A app.app.celery worker -B -c 1 --loglevel=info -P threads
+sudo systemctl start redis
+```
+Launch Celery
+```bash
+celery -A app.app.celery worker -B -c 1 --loglevel=info -P threads
 ```
 Run the app
 ```bash
 python run.py
 ```
+Or run everything at once:
+```bash
+bash run.sh
+```
+
 ## Launch annotation :rocket:
 One manifest
 ```bash
@@ -124,10 +147,10 @@ curl -X POST -H "X-API-Key: <api-key>" -F url_file=@iiif/test-manifests.txt mode
 ```
 
 ## Compute similarity
+
 ```bash
 APP_NAME="<your_app_name>"
 ```
-
 ```bash
 # Get API_KEY
 API_KEY=$(sqlite3 $DB_NAME.db <<EOF

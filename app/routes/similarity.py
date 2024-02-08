@@ -27,7 +27,7 @@ def run_similarity():
     callback = request.form.get('callback')  # which url to send back the similarity data
 
     similarity.delay(documents, model, callback)
-    return f"Detection task triggered with Celery!"
+    return f"Similarity task triggered with Celery!"
 
 
 @app.route('/delete_similarity', methods=['POST'])
@@ -36,4 +36,5 @@ def delete_similarity():
     """
     Delete features and pairs of scores related to a given document
     """
+    # TODO
     return False
