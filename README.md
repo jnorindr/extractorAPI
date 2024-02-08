@@ -28,31 +28,32 @@ pip install -r requirements.txt
 ```
 
 #### API Keys Database
+Set your app and database variables:
+```bash
+DB_NAME="<db-name>"
+APP_NAME="<front-app-name-that-will-access-api>"
+APP_KEY="$(openssl rand -base64 32 | tr -d '/\n')"
+```
 Create a SQLite database at the root of the API repository to store API keys
 ```shell
-DB_NAME="<db_name>" && sqlite3 $DB_NAME.db <<EOF
-CREATE TABLE app (
+sqlite3 $DB_NAME.db <<EOF
+CREATE TABLE apps (
    id INTEGER PRIMARY KEY AUTOINCREMENT,
    app_name CHAR(50) NOT NULL,
    app_key CHAR(80) NOT NULL
 );
 EOF
 ```
-Set an app name and its key:
-```bash
-APP_NAME=<your_app_name>
-APP_KEY="$(openssl rand -base64 32 | tr -d '/\n')"
-```
-Add them to the database
+Add app name and key to the database
 ```bash
 sqlite3 $DB_NAME.db <<EOF
-INSERT INTO app (app_name, app_key) VALUES ('$APP_NAME', '$APP_KEY');
+INSERT INTO apps (app_name, app_key) VALUES ('$APP_NAME', '$APP_KEY');
 EOF
 ```
-Show content of the `app` table:
+Show content of the `apps` table:
 ```bash
 sqlite3 -header -column $DB_NAME.db <<EOF
-SELECT * FROM app;
+SELECT * FROM apps;
 EOF
 ```
 
@@ -64,10 +65,10 @@ cp .env{.template,}
 Change the content according to your Celery backend, client app and API keys database
 ```bash
 CELERY_BROKER_URL="redis://localhost:<redis-port>" # default port: 6379
-APP_PORT=<api-port> # default port: 5000
+API_PORT=<api-port> # default port: 5000
 DEBUG=True
 CLIENT_APP_URL="<url-of-front-app-connected-to-API>"
-SQLALCHEMY_DATABASE_URI=sqlite:///</absolute/path/to/$DB_NAME.db>
+DB_NAME="<db-name-without-extension>"
 ```
 [//]: # (If you use another port than `6379` for Redis &#40;e.g. multiple celery instances on the same server&#41;, update the `redis.conf`:)
 [//]: # (```bash)
@@ -129,42 +130,55 @@ Or run everything at once:
 bash run.sh
 ```
 
-## Launch annotation :rocket:
-One manifest
-```bash
-curl -X POST -H "X-API-Key: <api-key>" -F manifest_url='<url-manifest>' http://127.0.0.1:5000/run_detect
-```
-Manifest list in a text file
-```bash
-curl -X POST -H "X-API-Key: <api-key>" -F url_file=@iiif/test-manifests.txt http://127.0.0.1:5000/detect_all
-```
-To use a different model from the default model
-```bash
-curl -X POST -H "X-API-Key: <api-key>" -F manifest_url='<url-manifest>' model='<filename>' http://127.0.0.1:5000/run_detect
-```
-```bash
-curl -X POST -H "X-API-Key: <api-key>" -F url_file=@iiif/test-manifests.txt model='<filename>' http://127.0.0.1:5000/detect_all
-```
+## Use API :rocket:
 
-## Compute similarity
-
+### Load variables
 ```bash
+# Choose app to use for request
 APP_NAME="<your_app_name>"
-```
-```bash
+# Load environment variables ($DB_NAME and $API_PORT)
+source .env
 # Get API_KEY
 API_KEY=$(sqlite3 $DB_NAME.db <<EOF
-SELECT app_key FROM app WHERE app_name = '$APP_NAME';
+SELECT app_key FROM apps WHERE app_name = '$APP_NAME';
 EOF
 )
 ```
 
+### Extract annotations
+One manifest
+```bash
+curl -X POST -H "X-API-Key: $API_KEY" -F manifest_url='<url-manifest>' http://127.0.0.1:$API_PORT/run_detect
+```
+Manifest list in a text file
+```bash
+curl -X POST -H "X-API-Key: $API_KEY" -F url_file=@iiif/test-manifests.txt http://127.0.0.1:$API_PORT/detect_all
+```
+To use a different model from the default model
+```bash
+curl -X POST -H "X-API-Key: $API_KEY" -F model='<model-filename>' manifest_url='<url-manifest>'  http://127.0.0.1:$API_PORT/run_detect
+```
+Get the list of available extraction models filenames
+```bash
+curl http://127.0.0.1:$API_PORT/models
+```
+
+### Compute similarity
+Compute similarity scores for pairs of documents (here: `(doc1,doc1)`, `(doc1,doc2)`, `(doc1,doc3)`, `(doc2,doc2)`, `(doc2,doc3)`, `(doc3,doc3)`)
 ```bash
 curl -X POST -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" -d '{
     "documents": {
         "doc1_id": "doc1_url",
         "doc2_id": "doc2_url",
-        "doc3_id": "doc3_url",
+        "doc3_id": "doc3_url"
     }
-}' http://127.0.0.1:5000/run_similarity
+}' http://127.0.0.1:$API_PORT/run_similarity
+```
+
+Choose the backbone model for feature extraction (between: `resnet34`, `moco_v2_800ep_pretrain`, `dino_deitsmall16_pretrain`, `dino_vitbase8_pretrain`)
+```bash
+curl -X POST -H "X-API-Key: $API_KEY" -H "Content-Type: application/json" -d '{
+    "documents": {"doc1_id": "doc1_url"},
+    "model": "dino_vitbase8_pretrain"
+}' http://127.0.0.1:$API_PORT/run_similarity
 ```

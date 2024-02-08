@@ -3,4 +3,4 @@ from app.config import Config
 
 
 if __name__ == '__main__':
-    app.run(port=int(Config.APP_PORT))
+    app.run(port=int(Config.API_PORT))

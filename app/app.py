@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from flask import Flask
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
@@ -18,4 +21,4 @@ celery = Celery(
 celery.conf.update(app.config)
 
 
-from app.routes import detection, training
+from app.routes import detection, training, similarity

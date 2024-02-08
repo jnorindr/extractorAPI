@@ -246,10 +246,10 @@ def training(model, data, epochs):
 def similarity(documents, model=FEAT_NET, callback=None):
     """
     E.g.
-    documents = {
-        "wit3_man186_anno181": 'https://eida.obspm.fr/eida/wit3_man186_anno181/list/',
-        "wit87_img87_anno87": 'https://eida.obspm.fr/eida/wit87_img87_anno87/list/',
-        "wit2_img2_anno2": 'https://eida.obspm.fr/eida/wit2_img2_anno2/list/'
+    "documents": {
+        "wit3_man186_anno181": "https://eida.obspm.fr/eida/wit3_man186_anno181/list/",
+        "wit87_img87_anno87": "https://eida.obspm.fr/eida/wit87_img87_anno87/list/",
+        "wit2_img2_anno2": "https://eida.obspm.fr/eida/wit2_img2_anno2/list/"
     }
     """
 
@@ -259,7 +259,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
         # TODO check first if features were computed + use of model
         if not is_downloaded(doc_id):
             download_images(url, doc_id)
-            # TODO here compute features
+            # TODO here compute features using model
 
     npy_pairs = {}
     for doc_pair in doc_pairs(doc_ids):
@@ -280,6 +280,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
 
     try:
         if callback:
+            # f"{callback}/" if callback else f"{ENV.str('CLIENT_APP_URL')}/similarity"
             requests.post(
                 url=f"{callback}",
                 files=npy_pairs,

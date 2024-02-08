@@ -1,11 +1,13 @@
 from pathlib import Path
 
+from app.utils.paths import create_if_not
+
 # Absolute path to root dir (similarity/)
 SIM_DIR = Path(__file__).resolve().parent
-DOC_PATH = SIM_DIR / "documents"
-MODEL_PATH = SIM_DIR / "models"
-SCORES_PATH = SIM_DIR / "scores"
-FEATS_PATH = SIM_DIR / "feats"
+DOC_PATH = create_if_not(SIM_DIR / "documents")
+MODEL_PATH = create_if_not(SIM_DIR / "models")
+SCORES_PATH = create_if_not(SIM_DIR / "scores")
+FEATS_PATH = create_if_not(SIM_DIR / "feats")
 
 MAX_SIZE = 244
 MAX_RES = 500
