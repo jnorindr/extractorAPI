@@ -15,7 +15,7 @@ from app.similarity.const import SCORES_PATH, FEAT_NET
 from app.similarity.similarity import compute_seg_pairs
 from app.similarity.utils import is_downloaded, download_images, doc_pairs, hash_pair
 from app.utils import sanitize_str
-from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, LOG_PATH
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, APP_LOG
 from app.utils.logger import console
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
@@ -39,8 +39,8 @@ def delete_images():
 @celery.task
 def empty_logs():
     two_weeks_ago = datetime.now() - timedelta(weeks=2)
-    if os.path.exists(LOG_PATH):
-        with open(LOG_PATH, 'r') as log_file:
+    if os.path.exists(APP_LOG):
+        with open(APP_LOG, 'r') as log_file:
             lines = log_file.readlines()
 
         for line_nb, line in enumerate(lines):
@@ -51,7 +51,7 @@ def empty_logs():
             except ValueError:
                 pass  # Ignore lines without a date
 
-        with open(LOG_PATH, 'w') as log_file:
+        with open(APP_LOG, 'w') as log_file:
             log_file.writelines(lines[line_nb:])
 
 

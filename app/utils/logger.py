@@ -3,7 +3,8 @@ import os
 import time
 import traceback
 
-from app.utils.paths import ENV, LOG_PATH, IMG_LOG
+from app.app import app_logger
+from app.utils.paths import ENV, IMG_LOG
 from app.utils import pprint
 
 DEBUG = ENV.list("DEBUG")
@@ -50,25 +51,12 @@ def console(msg="🚨🚨🚨", color="blue", error:Exception=None):
 
     msg = f"\n\n{get_time()}\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n\n"
 
-    logger = logging.getLogger("exapi")
-
-    # logger.setLevel(logging.DEBUG)
-    #
-    # file_handler = logging.FileHandler(LOG_PATH)
-    # file_handler.setLevel(logging.DEBUG)
-    #
-    # console_handler = logging.StreamHandler()
-    # console_handler.setLevel(logging.DEBUG)
-    #
-    # logger.addHandler(file_handler)
-    # logger.addHandler(console_handler)
-
     if error:
-        logger.error(msg, exc_info=error)
+        app_logger.logger.error(msg, exc_info=error)
     elif color == "yellow":
-        logger.warning(msg)
+        app_logger.logger.warning(msg)
     else:
-        logger.info(msg)
+        app_logger.logger.info(msg)
 
 
 def log_failed_img(img_name, img_url):
