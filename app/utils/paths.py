@@ -33,6 +33,8 @@ create_dirs_if_not([IMG_PATH, ANNO_PATH, MANIFESTS_PATH, MODEL_PATH, DATA_PATH, 
 
 APP_LOG = Path(f"{LOG_PATH}/api_logs.log")
 IMG_LOG = Path(f"{LOG_PATH}/img.log")
+CELERY_LOG = Path(f"{LOG_PATH}/celery.log")
+CELERY_ERROR_LOG = Path(f"{LOG_PATH}/celery_error.log")
 
 create_files_if_not([APP_LOG, IMG_LOG])
 

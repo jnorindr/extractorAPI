@@ -3,11 +3,9 @@ import os
 import time
 import traceback
 
-from app.app import app_logger
-from app.utils.paths import ENV, IMG_LOG
+# from app.app import app_logger
+from app.utils.paths import ENV, IMG_LOG, APP_LOG
 from app.utils import pprint
-
-DEBUG = ENV.list("DEBUG")
 
 
 class TerminalColors:
@@ -44,19 +42,19 @@ def get_color(color=None):
 
 
 def console(msg="🚨🚨🚨", color="blue", error:Exception=None):
+    logging.basicConfig(filename=APP_LOG, encoding='utf-8', level=logging.DEBUG)
     if error:
         color = "red"
-        stack_trace = traceback.format_exc()
-        msg += f"\n\nStack Trace:\n{stack_trace}"
+    stack_trace = f"\nStack Trace:\n{get_color(color)}{traceback.format_exc()}{TerminalColors.end}\n" if error else ""
 
-    msg = f"\n\n{get_time()}\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n\n"
+    msg = f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{stack_trace}"
 
     if error:
-        app_logger.logger.error(msg, exc_info=error)
+        logging.error(msg, exc_info=error)
     elif color == "yellow":
-        app_logger.logger.warning(msg)
+        logging.warning(msg)
     else:
-        app_logger.logger.info(msg)
+        logging.info(msg)
 
 
 def log_failed_img(img_name, img_url):

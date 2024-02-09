@@ -15,7 +15,8 @@ from app.similarity.const import SCORES_PATH, FEAT_NET
 from app.similarity.similarity import compute_seg_pairs
 from app.similarity.utils import is_downloaded, download_images, doc_pairs, hash_pair
 from app.utils import sanitize_str
-from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, APP_LOG
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, APP_LOG, \
+    CELERY_LOG, CELERY_ERROR_LOG
 from app.utils.logger import console
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
@@ -36,23 +37,28 @@ def delete_images():
                 shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
 
 
-@celery.task
-def empty_logs():
-    two_weeks_ago = datetime.now() - timedelta(weeks=2)
-    if os.path.exists(APP_LOG):
-        with open(APP_LOG, 'r') as log_file:
+def empty_log(log_file:str, two_weeks_ago):
+    if os.path.exists(log_file):
+        with open(log_file, 'r') as log_file:
             lines = log_file.readlines()
 
         for line_nb, line in enumerate(lines):
             try:
-                log_date = datetime.strptime(line[:10], "%Y-%m-%d")
+                log_date = datetime.strptime(line[1:11], "%Y-%m-%d")
                 if log_date > two_weeks_ago:
                     break
             except ValueError:
                 pass  # Ignore lines without a date
 
-        with open(APP_LOG, 'w') as log_file:
+        with open(log_file, 'w') as log_file:
             log_file.writelines(lines[line_nb:])
+
+
+@celery.task
+def empty_logs():
+    two_weeks_ago = datetime.now() - timedelta(weeks=2)
+    for log_file in [APP_LOG, CELERY_LOG, CELERY_ERROR_LOG]:
+        empty_log(log_file, two_weeks_ago)
 
 
 @celery.on_after_configure.connect

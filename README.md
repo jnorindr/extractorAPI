@@ -66,7 +66,7 @@ Change the content according to your Celery backend, client app and API keys dat
 ```bash
 CELERY_BROKER_URL="redis://localhost:<redis-port>" # default port: 6379
 API_PORT=<api-port> # default port: 5000
-DEBUG=True
+DEBUG=True # False for production
 CLIENT_APP_URL="<url-of-front-app-connected-to-API>"
 DB_NAME="<db-name-without-extension>"
 ```
