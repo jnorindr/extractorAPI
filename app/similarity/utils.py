@@ -151,17 +151,28 @@ def download_img(img_url, doc_id, img_name):
 
 
 def download_images(url, doc_id):
-    # e.g. https://eida.obspm.fr/eida/wit1_man191_anno188/list/
+    """
+    e.g.
+    url = https://eida.obspm.fr/eida/wit1_man191_anno188/list/
+    images = {
+        "img_name": "https://domain-name.com/image_name.jpg",
+        "img_name": "https://other-domain.com/image_name.jpg",
+        "img_name": "https://iiif-server.com/.../coordinates/size/rotation/default.jpg",
+        "img_name": "..."
+    }
+    """
 
     images = get_json(url)
-    z = len(str(len(images)))
-    i = 1
+    # z = len(str(len(images)))
+    # i = 1
     paths = []
-    for img_url in images:
-        print(f"{img_url} {i:0{z}}.jpg")
-        download_img(img_url, doc_id, f"{i:0{z}}.jpg")
-        paths.append(f"{DOC_PATH}/{doc_id}/{i:0{z}}.jpg")
-        i += 1
+    for img_name, img_url in images:
+        # img_name = f"{i:0{z}}.jpg"
+        # i += 1
+        print(f"{img_url} {img_name}")
+        download_img(img_url, doc_id, img_name)
+        paths.append(f"{DOC_PATH}/{doc_id}/{img_name}")
+
     return paths
 
 

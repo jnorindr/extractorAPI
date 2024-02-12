@@ -19,12 +19,10 @@ def run_similarity():
     Compute similarity for images from a list of URLs.
     Each URL corresponds to a document and contains a list of images to download:
     {
-        "images": [
-            "https://domain-name.com/image_name.jpg",
-            "https://other-domain.com/image_name.jpg",
-            "https://iiif-server.com/.../coordinates/size/rotation/default.jpg",
-            "..."
-        ]
+        "img_name": "https://domain-name.com/image_name.jpg",
+        "img_name": "https://other-domain.com/image_name.jpg",
+        "img_name": "https://iiif-server.com/.../coordinates/size/rotation/default.jpg",
+        "img_name": "..."
     }
     Each document is compared to itself and other documents resulting in a list a comparison pairs
     """
