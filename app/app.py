@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 
-REDIS_BROKER = f"{ENV.str('CELERY_BROKER_URL')}/{1 if ENV.str('DEBUG') else 0}"
+REDIS_BROKER = f"{ENV.str('CELERY_BROKER_URL')}/{1 if ENV.bool('DEBUG') else 0}"
 
 celery = Celery(
     app.import_name,
