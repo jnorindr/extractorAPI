@@ -50,8 +50,8 @@ def empty_log(log_file:str, two_weeks_ago):
             except ValueError:
                 pass  # Ignore lines without a date
 
-        with open(log_file, 'w') as log_file:
-            log_file.writelines(lines[line_nb:])
+        with open(log_file, 'w') as file:
+            file.writelines(lines[line_nb:])
 
 
 @celery.task
