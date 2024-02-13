@@ -101,7 +101,7 @@ sudo sed -i -e "s/# requirepass [^ ]*/requirepass $REDIS_PSW/" "$REDIS_CONF"
 ```
 Update the `CELERY_BROKER_URL` inside the `.env` file:
 ```bash
-sed -i '' -e "s~^CELERY_BROKER_URL=.*~CELERY_BROKER_URL=\"redis://:$REDIS_PSW@localhost:6379/0\"~" .env
+sed -i '' -e "s~^CELERY_BROKER_URL=.*~CELERY_BROKER_URL=\"redis://:$REDIS_PSW@localhost:6379\"~" .env
 ```
 Restart Redis
 ```bash
