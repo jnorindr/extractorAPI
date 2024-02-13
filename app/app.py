@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
@@ -10,12 +12,14 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 
+REDIS_BROKER = f"{ENV.str('CELERY_BROKER_URL')}/{1 if ENV.str('DEBUG') else 0}"
+
 celery = Celery(
     app.import_name,
-    backend=ENV.str("CELERY_BROKER_URL"),
-    broker=ENV.str("CELERY_BROKER_URL")
+    backend=REDIS_BROKER,
+    broker=REDIS_BROKER
 )
 celery.conf.update(app.config)
 
 
-from app.routes import detection, training
+from app.routes import detection, training, similarity

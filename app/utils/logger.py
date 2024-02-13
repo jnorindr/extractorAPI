@@ -1,65 +1,66 @@
 import logging
+import os
 import time
+import traceback
 
-from app.utils.paths import ENV, LOG_PATH
-from app.utils import pprint, check_and_create_if_not
-
-DEBUG = ENV.list("DEBUG")
+# from app.app import app_logger
+from app.utils.paths import ENV, IMG_LOG, APP_LOG
+from app.utils import pprint
 
 
 class TerminalColors:
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
+    """
+    Last digit
+    0	black
+    1	red
+    2	green
+    3	yellow
+    4	blue
+    5	magenta
+    6	cyan
+    7	white
+    """
+    black = "\033[90m"
+    red = "\033[91m"
+    green = "\033[92m"
+    yellow = "\033[93m"
+    blue = "\033[94m"
+    magenta = "\033[95m"
+    cyan = "\033[96m"
+    white = "\033[97m"
+    bold = "\033[1m"
+    underline = "\033[4m"
+    end = "\033[0m"
 
 
 def get_time():
     return time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def get_color(msg_type=None):
-    if msg_type == "error":
-        return TerminalColors.FAIL
-    if msg_type == "warning":
-        return TerminalColors.WARNING
-    return TerminalColors.OKBLUE
+def get_color(color=None):
+    return getattr(TerminalColors, color, "\033[94m")
 
 
-def console(msg="🚨🚨🚨", msg_type=None):
-    msg = f"\n\n\n{get_time()}\n{get_color(msg_type)}{TerminalColors.BOLD}{pprint(msg)}{TerminalColors.ENDC}\n\n\n"
+def console(msg="🚨🚨🚨", color="blue", error:Exception=None):
+    logging.basicConfig(filename=APP_LOG, encoding='utf-8', level=logging.DEBUG)
+    if error:
+        color = "red"
+    stack_trace = f"\nStack Trace:\n{get_color(color)}{traceback.format_exc()}{TerminalColors.end}\n" if error else ""
 
-    if not DEBUG:
-        log(msg)
-        return
+    msg = f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{stack_trace}"
 
-    logger = logging.getLogger("django")
-    if msg_type == "error":
-        logger.error(msg)
-    elif msg_type == "warning":
-        logger.warning(msg)
+    if error:
+        logging.error(msg, exc_info=error)
+    elif color == "yellow":
+        logging.warning(msg)
     else:
-        logger.info(msg)
+        logging.info(msg)
 
 
-def log(msg, color=TerminalColors.OKBLUE):
-    """
-    Record an error message in the system log
-    """
-    import logging
-    import traceback
+def log_failed_img(img_name, img_url):
+    if not os.path.isfile(IMG_LOG):
+        f = open(IMG_LOG, "x")
+        f.close()
 
-    trace = traceback.format_exc()
-    if trace == "NoneType: None\n":
-        # trace = traceback.extract_stack(limit=10)
-        trace = ""
-
-    check_and_create_if_not(LOG_PATH)
-
-    # Create a logger instance
-    logger = logging.getLogger("django")
-    logger.error(f"\n{pprint(msg)}\n{trace}\n")
+    with open(IMG_LOG, "a") as f:
+        f.write(f"{img_name} {img_url}\n")

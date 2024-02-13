@@ -7,8 +7,8 @@ from PIL import Image, UnidentifiedImageError
 import requests
 from urllib.parse import urlparse
 
-from app.utils import check_and_create_if_not, sanitize_str, sanitize_url
-from app.utils.logger import console, log
+from app.utils import check_dir, sanitize_str, sanitize_url
+from app.utils.logger import console
 from app.utils.paths import IMG_PATH
 
 
@@ -20,7 +20,7 @@ def get_json(url):
         else:
             response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        log(e)
+        console("Error", error=e)
         return None
 
 
@@ -75,7 +75,7 @@ def get_iiif_resources(manifest, only_img_url=False):
             ]
             img_info = [get_img_rsrc(img) for img in img_list]
         except KeyError as e:
-            log(f"Unable to retrieve resources from manifest {manifest}\n{e}")
+            console(f"Unable to retrieve resources from manifest {manifest}", error=e)
             return []
 
     return img_info
@@ -101,7 +101,7 @@ def get_id(dic):
             try:
                 return dic["id"]
             except KeyError as e:
-                log(f"No id provided {e}")
+                console(f"No id provided", error=e)
 
     if isinstance(dic, str):
         return dic
@@ -128,7 +128,7 @@ class IIIFDownloader:
         self.manifest_id = self.manifest_id + self.get_manifest_id(manifest)
         if manifest is not None:
             console(f"Processing {self.manifest_url}...")
-            if not check_and_create_if_not(self.manifest_dir_path):
+            if not check_dir(self.manifest_dir_path):
                 i = 1
                 for rsrc in get_iiif_resources(manifest):
                     # if i > 7:  # TODO to remove
@@ -185,7 +185,7 @@ class IIIFDownloader:
                     self.save_iiif_img(img_rscr, i, self.get_formatted_size(size))
                     return
                 else:
-                    log(f"{iiif_url} is not a valid img file: {e}")
+                    console(f"{iiif_url} is not a valid img file", error=e)
                     return
             except (IOError, OSError) as e:
                 if size == "full":
@@ -193,7 +193,7 @@ class IIIFDownloader:
                     self.save_iiif_img(img_rscr, i, self.get_formatted_size(size))
                     return
                 else:
-                    log(f"{iiif_url} is a truncated or corrupted image: {e}")
+                    console(f"{iiif_url} is a truncated or corrupted image", error=e)
                     return
 
             self.save_img(img, img_name, f"Failed to save {iiif_url}")
@@ -204,7 +204,7 @@ class IIIFDownloader:
             img.save(self.manifest_dir_path / img_filename)
             return True
         except Exception as e:
-            log(f"{error_msg}:\n{e}")
+            console(f"{error_msg}", error=e)
         return False
 
     def get_manifest_id(self, manifest):

@@ -137,7 +137,7 @@ def plot_results_with_masks(file='path/to/results.csv', dir='', best=True):
                 # if j in [8, 9, 10]:  # share train and val loss y axes
                 #     ax[i].get_shared_y_axes().join(ax[i], ax[i - 5])
         except Exception as e:
-            print(f'Warning: Plotting error for {f}: {e}')
+            print(f'Warning: Plotting error for {f}: {e}', e)
     ax[1].legend()
     fig.savefig(save_dir / 'results.png', dpi=200)
     plt.close()
