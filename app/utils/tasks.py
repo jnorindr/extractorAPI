@@ -37,9 +37,10 @@ def delete_images():
                 shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
 
 
-def empty_log(log_file:str, two_weeks_ago):
-    if os.path.exists(log_file):
-        with open(log_file, 'r') as log_file:
+def empty_log(log_path:str, two_weeks_ago):
+    line_nb = 0
+    if os.path.exists(log_path):
+        with open(log_path, 'r') as log_file:
             lines = log_file.readlines()
 
         for line_nb, line in enumerate(lines):
@@ -50,8 +51,8 @@ def empty_log(log_file:str, two_weeks_ago):
             except ValueError:
                 pass  # Ignore lines without a date
 
-        with open(log_file, 'w') as file:
-            file.writelines(lines[line_nb:])
+        with open(log_path, 'w') as log_file:
+            log_file.writelines(lines[line_nb:])
 
 
 @celery.task
@@ -262,10 +263,14 @@ def similarity(documents, model=FEAT_NET, callback=None):
     doc_ids = []
     for doc_id, url in documents.items():
         doc_ids.append(doc_id)
-        # TODO check first if features were computed + use of model
-        if not is_downloaded(doc_id):
-            download_images(url, doc_id)
-            # TODO here compute features using model
+        try:
+            # TODO check first if features were computed + use of model
+            if not is_downloaded(doc_id):
+                download_images(url, doc_id)
+                # TODO here compute features using model
+        except Exception as e:
+            console(f"[@celery.task.similarity] Unable to download images for {doc_id}", e)
+            return
 
     npy_pairs = {}
     for doc_pair in doc_pairs(doc_ids):
@@ -274,23 +279,19 @@ def similarity(documents, model=FEAT_NET, callback=None):
         if not os.path.exists(score_file):
             compute_seg_pairs(doc_pair, hashed_pair)
 
-        npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", open(score_file, 'rb'))
-
-    #     # TODO compute total score on frontend platform
-    #     for img in get_imgs_in_dirs(get_doc_dirs(doc_pair)):
-    #         if img not in total_scores:
-    #             total_scores[img] = []
-    #         total_scores[img].extend(best_matches(seg_pairs, img, doc_pair))
-    #
-    # sorted_scores = {q_img: sorted(sim, key=lambda x: x[0], reverse=True) for q_img, sim in total_scores.items()}
+        with open(score_file, 'rb') as file:
+            npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", file.read())
 
     try:
         if callback:
             # f"{callback}/" if callback else f"{ENV.str('CLIENT_APP_URL')}/similarity"
-            requests.post(
+            response = requests.post(
                 url=f"{callback}",
                 files=npy_pairs,
             )
+            response.raise_for_status()
         return console(f"Successfully send scores for {doc_ids}")
+    except requests.exceptions.RequestException as e:
+        console('Error in callback request:', error=e)
     except Exception as e:
         console(f'An error occurred', error=e)
