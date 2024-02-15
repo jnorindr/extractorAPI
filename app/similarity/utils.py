@@ -91,7 +91,7 @@ def save_img(
     img_format="JPEG",
 ):
     try:
-        filename, _ = get_file_ext(img_filename)
+        console(f"save_img: {img_filename}", color="yellow")
         if img.mode != "RGB":
             img = img.convert("RGB")
 
@@ -106,17 +106,15 @@ def save_img(
         # tr_img = tr_(img).permute(1, 2, 0).numpy()
         # cv2.imwrite(query_img, tr_img)
 
-        img.save(img_path / f"{filename}.jpg", format=img_format)
+        img.save(f"{img_path}/{img_filename}.jpg", format=img_format)
         return img
     except Exception as e:
         console(f"Failed to save img as JPEG", error=e)
         return False
 
-
 def get_json(url):
     with urllib.request.urlopen(url) as url:
         return json.loads(url.read().decode())
-
 
 def hash_str(string):
     hash_object = hashlib.sha256()
@@ -166,10 +164,9 @@ def download_images(url, doc_id):
     # z = len(str(len(images)))
     # i = 1
     paths = []
-    for img_name, img_url in images:
+    for img_name, img_url in images.items():
         # img_name = f"{i:0{z}}.jpg"
         # i += 1
-        print(f"{img_url} {img_name}")
         download_img(img_url, doc_id, img_name)
         paths.append(f"{DOC_PATH}/{doc_id}/{img_name}")
 
@@ -201,6 +198,8 @@ def is_downloaded(doc_id):
     path = f"{DOC_PATH}/{doc_id}/"
     if not os.path.exists(path):
         Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
+        return False
+    if len(os.listdir(path)) == 0:
         return False
     return True
 

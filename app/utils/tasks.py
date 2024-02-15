@@ -157,7 +157,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model] Error: Failed to load image {image_path}", "red")
+                    console(f"[test_model] Error: Failed to load image {image_path}", color="red")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
@@ -198,7 +198,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", "red")
+                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", color="red")
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -219,8 +219,7 @@ def test(model, dataset, save_dir):
                     cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
 
                     # Add the class labels to the bounding boxes
-                    cv2.putText(img, "ground truth", (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
-                                1)
+                    cv2.putText(img, "ground truth", (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
 
                 # Save the annotated image to the output folder
                 neg_output_path = os.path.join(neg_output_dir, image_file)
@@ -269,7 +268,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
                 download_images(url, doc_id)
                 # TODO here compute features using model
         except Exception as e:
-            console(f"[@celery.task.similarity] Unable to download images for {doc_id}", e)
+            console(f"[@celery.task.similarity] Unable to download images for {doc_id}", error=e)
             return
 
     npy_pairs = {}
@@ -277,7 +276,10 @@ def similarity(documents, model=FEAT_NET, callback=None):
         hashed_pair = hash_pair(doc_pair)
         score_file = SCORES_PATH / f"{hashed_pair}.npy"
         if not os.path.exists(score_file):
-            compute_seg_pairs(doc_pair, hashed_pair)
+            scores = compute_seg_pairs(doc_pair, hashed_pair)
+            if scores == False:
+                console('Error when computing scores', color="red")
+                return
 
         with open(score_file, 'rb') as file:
             npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", file.read())
