@@ -87,7 +87,7 @@ def detect(manifest_url, model=None, callback=None):
             data={"model": f"{anno_model}_{time.strftime('%m_%Y', time.gmtime(os.path.getmtime(weights)))}"}
         )
 
-        return f"Annotations from {anno_model} sent to {callback}"
+        return f"Annotations from {anno_model} sent to {callback}/{digit_ref}"
     except Exception as e:
         return f'An error occurred: {e}'
 
