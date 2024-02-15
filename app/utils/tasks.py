@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 from app.app import celery
 
@@ -10,9 +11,13 @@ from datetime import datetime, timedelta
 from celery.schedules import crontab
 from os.path import exists
 
+from app.similarity.const import SCORES_PATH, FEAT_NET
+from app.similarity.similarity import compute_seg_pairs
+from app.similarity.utils import is_downloaded, download_images, doc_pairs, hash_pair
 from app.utils import sanitize_str
-from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH
-from app.utils.logger import log
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, APP_LOG, \
+    CELERY_LOG, CELERY_ERROR_LOG
+from app.utils.logger import console
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
 from app.yolov5.detect import run as run_yolov5
@@ -23,6 +28,7 @@ from app.yolov5 import train
 def delete_images():
     # Function to delete images after a week
     week_ago = datetime.now() - timedelta(days=7)
+    # TODO delete images from similarity as well
     for ms_dir in os.listdir(IMG_PATH):
         dir_path = os.path.join(IMG_PATH, ms_dir)
         if os.path.isdir(dir_path):
@@ -31,12 +37,40 @@ def delete_images():
                 shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
 
 
+def empty_log(log_file:str, two_weeks_ago):
+    if os.path.exists(log_file):
+        with open(log_file, 'r') as log_file:
+            lines = log_file.readlines()
+
+        for line_nb, line in enumerate(lines):
+            try:
+                log_date = datetime.strptime(line[1:11], "%Y-%m-%d")
+                if log_date > two_weeks_ago:
+                    break
+            except ValueError:
+                pass  # Ignore lines without a date
+
+        with open(log_file, 'w') as file:
+            file.writelines(lines[line_nb:])
+
+
+@celery.task
+def empty_logs():
+    two_weeks_ago = datetime.now() - timedelta(weeks=2)
+    for log_file in [APP_LOG, CELERY_LOG, CELERY_ERROR_LOG]:
+        empty_log(log_file, two_weeks_ago)
+
+
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Periodic task setting for image deletion
     sender.add_periodic_task(
         crontab(hour=2, minute=0),
         delete_images.s()
+    )
+    sender.add_periodic_task(
+        crontab(hour=2, minute=0),
+        empty_logs.s(),
     )
 
 
@@ -64,12 +98,12 @@ def detect(manifest_url, model=None, callback=None):
         # If annotations are generated again, empty annotation file
         open(anno_file, 'w').close()
 
-    log(f"\n\n\x1b[38;5;226m\033[1mDETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️\x1b[0m\n\n")
+    console(f"DETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️")
     digit_path = IMG_PATH / digit_dir
 
     # For number and images in the witness images directory, run detection
     for i, img in enumerate(sorted(os.listdir(digit_path)), 1):
-        log(f"\n\x1b[38;5;226m===> Processing {img} 🔍\x1b[0m\n")
+        console(f"====> Processing {img} 🔍")
         run_vhs(
             weights=weights,
             source=digit_path / img,
@@ -89,7 +123,7 @@ def detect(manifest_url, model=None, callback=None):
 
         return f"Annotations from {anno_model} sent to {callback}/{digit_ref}"
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred', error=e)
 
 
 @celery.task
@@ -110,7 +144,7 @@ def test(model, dataset, save_dir):
         )
 
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred', error=e)
 
     try:
         if not os.path.exists(neg_output_dir):
@@ -122,13 +156,12 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    log("[test_model] Error: Failed to load image", image_path)
+                    console(f"[test_model] Error: Failed to load image {image_path}", "red")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
                 annotation_path = os.path.join(annotations_dir, annotation_file)
                 if not os.path.exists(annotation_path):
-                    # log("[test_model] Error: Failed to load image", image_path)
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -164,7 +197,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    log("[test_model_false_neg] Error: Failed to load image", image_path)
+                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", "red")
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -192,10 +225,10 @@ def test(model, dataset, save_dir):
                 neg_output_path = os.path.join(neg_output_dir, image_file)
                 cv2.imwrite(neg_output_path, img)
 
-        return f"Annotations plotted on images and saved to {output_dir}, no gt : {n}"
+        return f"Annotations plotted on images and saved to {output_dir}"  #, no gt : {n}"
 
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred', error=e)
 
 
 @celery.task
@@ -212,4 +245,52 @@ def training(model, data, epochs):
         return f"Trained model {model} with {data} dataset."
 
     except Exception as e:
-        return f'An error occurred: {e}'
+        console(f'An error occurred', error=e)
+
+
+@celery.task
+def similarity(documents, model=FEAT_NET, callback=None):
+    """
+    E.g.
+    "documents": {
+        "wit3_man186_anno181": "https://eida.obspm.fr/eida/wit3_man186_anno181/list/",
+        "wit87_img87_anno87": "https://eida.obspm.fr/eida/wit87_img87_anno87/list/",
+        "wit2_img2_anno2": "https://eida.obspm.fr/eida/wit2_img2_anno2/list/"
+    }
+    """
+
+    doc_ids = []
+    for doc_id, url in documents.items():
+        doc_ids.append(doc_id)
+        # TODO check first if features were computed + use of model
+        if not is_downloaded(doc_id):
+            download_images(url, doc_id)
+            # TODO here compute features using model
+
+    npy_pairs = {}
+    for doc_pair in doc_pairs(doc_ids):
+        hashed_pair = hash_pair(doc_pair)
+        score_file = SCORES_PATH / f"{hashed_pair}.npy"
+        if not os.path.exists(score_file):
+            compute_seg_pairs(doc_pair, hashed_pair)
+
+        npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", open(score_file, 'rb'))
+
+    #     # TODO compute total score on frontend platform
+    #     for img in get_imgs_in_dirs(get_doc_dirs(doc_pair)):
+    #         if img not in total_scores:
+    #             total_scores[img] = []
+    #         total_scores[img].extend(best_matches(seg_pairs, img, doc_pair))
+    #
+    # sorted_scores = {q_img: sorted(sim, key=lambda x: x[0], reverse=True) for q_img, sim in total_scores.items()}
+
+    try:
+        if callback:
+            # f"{callback}/" if callback else f"{ENV.str('CLIENT_APP_URL')}/similarity"
+            requests.post(
+                url=f"{callback}",
+                files=npy_pairs,
+            )
+        return console(f"Successfully send scores for {doc_ids}")
+    except Exception as e:
+        console(f'An error occurred', error=e)
