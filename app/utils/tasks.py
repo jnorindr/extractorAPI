@@ -282,7 +282,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
                 return
 
         with open(score_file, 'rb') as file:
-            npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", file.read())
+            npy_pairs["-".join(sorted(doc_pair))] = (f"{hashed_pair}.npy", file.read())
 
     try:
         if callback:
