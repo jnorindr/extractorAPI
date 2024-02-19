@@ -129,12 +129,12 @@ def compute_seg_pairs(doc_pair, hashed_pair):
         # cos_pairs = cos_pairs.reshape(-1, COS_TOPK, cos_pairs.shape[1])
     except Exception as e:
         console(f"Error when computing cosine similarity", error=e)
-        return False
+        return np.empty(0)
 
     try:
         console(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
         seg_pairs = segswap_similarity(cos_pairs, output_file=hashed_pair)
     except Exception as e:
         console(f"Error when computing segswap scores", error=e)
-        return False
+        return np.empty(0)
     return seg_pairs

@@ -277,7 +277,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
         score_file = SCORES_PATH / f"{hashed_pair}.npy"
         if not os.path.exists(score_file):
             scores = compute_seg_pairs(doc_pair, hashed_pair)
-            if scores == False:
+            if scores.any():
                 console('Error when computing scores', color="red")
                 return
 
