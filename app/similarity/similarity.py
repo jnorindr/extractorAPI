@@ -39,6 +39,9 @@ def cosine_similarity(doc_pair):
 
     # TODO Extract features in previous step
     features = extract_features(data_loader, device, FEAT_LAYER, FEAT_SET, FEAT_NET, hash_pair(doc_pair)).cpu().numpy()
+    if not len(features):
+        console("Error when extracting features", color="red")
+        raise ValueError
 
     sim = pairwise.cosine_distances(features)
 
@@ -120,18 +123,18 @@ def segswap_similarity(cos_pairs, output_file=None):
 def compute_seg_pairs(doc_pair, hashed_pair):
     console(f"COMPUTING SIMILARITY FOR {doc_pair} 🖇️")
     try:
-        console(f"Computing cosine scores for {doc_pair} 🖇️", "cyan")
+        console(f"Computing cosine scores for {doc_pair} 🖇️", color="cyan")
         cos_pairs = cosine_similarity(doc_pair)
         # Reshape to group pairs for same query img
         # cos_pairs = cos_pairs.reshape(-1, COS_TOPK, cos_pairs.shape[1])
     except Exception as e:
         console(f"Error when computing cosine similarity", error=e)
-        return
+        return np.empty(0)
 
     try:
-        console(f"Computing segswap scores for {doc_pair} 🖇️", "cyan")
+        console(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
         seg_pairs = segswap_similarity(cos_pairs, output_file=hashed_pair)
     except Exception as e:
         console(f"Error when computing segswap scores", error=e)
-        return
+        return np.empty(0)
     return seg_pairs
