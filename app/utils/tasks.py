@@ -258,9 +258,14 @@ def similarity(documents, model=FEAT_NET, callback=None):
         "wit2_img2_anno2": "https://eida.obspm.fr/eida/wit2_img2_anno2/list/"
     }
     """
+    if len(list(documents.keys())) == 0:
+        console(f"[@celery.task.similarity] No documents to compare", color="red")
+
+    console(f"[@celery.task.similarity] Similarity task triggered for {list(documents.keys())} with {model}!")
 
     doc_ids = []
     for doc_id, url in documents.items():
+        console(f"[@celery.task.similarity] Processing {doc_id}...", color="cyan")
         doc_ids.append(doc_id)
         try:
             # TODO check first if features were computed + use of model
@@ -278,7 +283,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
         if not os.path.exists(score_file):
             scores = compute_seg_pairs(doc_pair, hashed_pair)
             if scores.any():
-                console('Error when computing scores', color="red")
+                console('[@celery.task.similarity] Error when computing scores', color="red")
                 return
 
         with open(score_file, 'rb') as file:
@@ -292,8 +297,8 @@ def similarity(documents, model=FEAT_NET, callback=None):
                 files=npy_pairs,
             )
             response.raise_for_status()
-        return console(f"Successfully send scores for {doc_ids}")
+        return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")
     except requests.exceptions.RequestException as e:
-        console('Error in callback request:', error=e)
+        console('[@celery.task.similarity] Error in callback request', error=e)
     except Exception as e:
-        console(f'An error occurred', error=e)
+        console('[@celery.task.similarity] An error occurred', error=e)
