@@ -7,8 +7,6 @@ from app.utils.paths import ENV
 from app.utils.tasks import similarity
 from app.utils.security import key_required
 
-from app.utils.logger import console
-
 
 @app.route("/run_similarity", methods=['POST'])
 @key_required
@@ -31,7 +29,6 @@ def run_similarity():
     """
 
     if not request.is_json:
-        console("[run_similarity] Request does contain correct payload")
         return "Similarity task aborted!"
 
     # dict of document ids with a URL containing a list of images
