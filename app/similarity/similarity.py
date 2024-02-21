@@ -133,8 +133,8 @@ def compute_seg_pairs(doc_pair, hashed_pair):
 
     try:
         console(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
-        seg_pairs = segswap_similarity(cos_pairs, output_file=hashed_pair)
+        segswap_similarity(cos_pairs, output_file=hashed_pair)
     except Exception as e:
         console(f"Error when computing segswap scores", error=e)
-        return np.empty(0)
-    return seg_pairs
+        return False
+    return True

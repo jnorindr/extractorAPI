@@ -276,29 +276,28 @@ def similarity(documents, model=FEAT_NET, callback=None):
             console(f"[@celery.task.similarity] Unable to download images for {doc_id}", error=e)
             return
 
-    npy_pairs = {}
     for doc_pair in doc_pairs(doc_ids):
         hashed_pair = hash_pair(doc_pair)
         score_file = SCORES_PATH / f"{hashed_pair}.npy"
         if not os.path.exists(score_file):
-            scores = compute_seg_pairs(doc_pair, hashed_pair)
-            if scores.any():
+            success = compute_seg_pairs(doc_pair, hashed_pair)
+            if not success:
                 console('[@celery.task.similarity] Error when computing scores', color="red")
                 return
 
+        npy_pairs = {}
         with open(score_file, 'rb') as file:
-            npy_pairs["-".join(sorted(doc_pair))] = (f"{hashed_pair}.npy", file.read())
+            npy_pairs["-".join(sorted(doc_pair))] = (f"{'-'.join(sorted(doc_pair))}.npy", file.read())
+            try:
+                if callback:
+                    response = requests.post(
+                        url=f"{callback}",
+                        files=npy_pairs,
+                    )
+                    response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                console(f'[@celery.task.similarity] Error in callback request for {doc_pair}', error=e)
+            except Exception as e:
+                console(f'[@celery.task.similarity] An error occurred for {doc_pair}', error=e)
 
-    try:
-        if callback:
-            # f"{callback}/" if callback else f"{ENV.str('CLIENT_APP_URL')}/similarity"
-            response = requests.post(
-                url=f"{callback}",
-                files=npy_pairs,
-            )
-            response.raise_for_status()
-        return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")
-    except requests.exceptions.RequestException as e:
-        console('[@celery.task.similarity] Error in callback request', error=e)
-    except Exception as e:
-        console('[@celery.task.similarity] An error occurred', error=e)
+    return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")
