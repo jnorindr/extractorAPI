@@ -3,8 +3,7 @@ import os
 import time
 import traceback
 
-# from app.app import app_logger
-from app.utils.paths import ENV, IMG_LOG, APP_LOG
+from app.utils.paths import IMG_LOG
 from app.utils import pprint
 
 
@@ -41,8 +40,13 @@ def get_color(color=None):
     return getattr(TerminalColors, color, "\033[94m")
 
 
-def console(msg="🚨🚨🚨", color="blue", error:Exception=None):
-    logging.basicConfig(filename=APP_LOG, encoding='utf-8', level=logging.DEBUG)
+def console(msg="🚨🚨🚨", color="blue", error: Exception = None):
+    # from celery import current_task, current_app
+    # logger = current_task.logger if current_task else current_app.log.get_default_logger()
+
+    logger = logging.getLogger("exapi")
+
+    # logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
     if error:
         color = "red"
     stack_trace = f"\nStack Trace:\n{get_color(color)}{traceback.format_exc()}{TerminalColors.end}\n" if error else ""
@@ -50,11 +54,14 @@ def console(msg="🚨🚨🚨", color="blue", error:Exception=None):
     msg = f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{stack_trace}"
 
     if error:
-        logging.error(msg, exc_info=error)
+        logger.error(msg, exc_info=error)
+        # logging.error(msg, exc_info=error)
     elif color == "yellow":
-        logging.warning(msg)
+        logger.warning(msg)
+        # logging.warning(msg)
     else:
-        logging.info(msg)
+        logger.info(msg)
+        # logging.info(msg)
 
 
 def log_failed_img(img_name, img_url):
