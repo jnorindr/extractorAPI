@@ -17,13 +17,21 @@ from app.utils.logger import console
 
 
 def get_cos_pair(doc_pair, img1, img2):
+    """
+    Allows to order the two images according to the doc pair order
+    in order to have all the scores for a same document on the same score "column"
+    """
     doc1, doc2 = doc_pair
     img1_dir, img2_dir = img1.split("/")[-2], img2.split("/")[-2]
+
+    print(img1_dir, doc1, img2_dir, doc2)
 
     if img1_dir == doc1 and img2_dir == doc2:
         return img1, img2
     elif img1_dir == doc2 and img2_dir == doc1:
         return img2, img1
+
+    # None values allows to filter out the unwanted pairs
     return None, None
 
 
@@ -58,14 +66,18 @@ def cosine_similarity(doc_pair):
         cv2.imwrite(query_img, tr_img)
 
         res = [1.0 if query_img == img_p else sim_score for img_p, sim_score in zip(img_paths, sim[i])]
-        sorted_indices_by_res = np.argsort(res)[:-1][: COS_TOPK] # [:-1] to remove the query image from its results
+        sorted_indices_by_res = np.argsort(res)[:-1][: COS_TOPK]  # [:-1] to remove the query image from its results
         sim_imgs = [img_paths[idx] for idx in sorted_indices_by_res]
         # sim_pairs.extend([(query_img, sim_img) for sim_img in sim_imgs])
         sim_pairs.append([get_cos_pair(doc_pair, query_img, sim_img) for sim_img in sim_imgs])
         i += 1
 
     np_pairs = np.array(sim_pairs)
+
+    # np_pairs = [[(img1doc1, img1doc2), (img1doc1, img2doc2), ...]
+    #             [(img2doc1, img4doc2), (img2doc1, img8doc2), ...]] # pairs for COS_TOPK similar images for each image
     return np_pairs
+
 
 def segswap_similarity(cos_pairs, output_file=None):
     param = torch.load(get_model_path('hard_mining_neg5'))
@@ -101,7 +113,7 @@ def segswap_similarity(cos_pairs, output_file=None):
             if s_img is None:
                 break
             st_img = resize(Image.open(s_img).convert("RGB"))
-            tensor1.append(q_tensor) # NOTE: maybe not necessary to duplicate same img tensor
+            tensor1.append(q_tensor)  # NOTE: maybe not necessary to duplicate same img tensor
             tensor2.append(transformINet(st_img).cuda())
 
         score = compute_score(torch.stack(tensor1), torch.stack(tensor2), backbone, encoder, y_grid, x_grid)
@@ -129,7 +141,7 @@ def compute_seg_pairs(doc_pair, hashed_pair):
         # cos_pairs = cos_pairs.reshape(-1, COS_TOPK, cos_pairs.shape[1])
     except Exception as e:
         console(f"Error when computing cosine similarity", error=e)
-        return np.empty(0)
+        return False
 
     try:
         console(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
