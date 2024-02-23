@@ -16,7 +16,7 @@ from app.similarity.similarity import compute_seg_pairs
 from app.similarity.utils import is_downloaded, download_images, doc_pairs, hash_pair
 from app.utils import sanitize_str
 from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH
-from app.utils.logger import console
+from app.utils.logger import console, log
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
 from app.yolov5.detect import run as run_yolov5
@@ -98,12 +98,12 @@ def detect(manifest_url, model=None, callback=None):
         # If annotations are generated again, empty annotation file
         open(anno_file, 'w').close()
 
-    console(f"DETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️")
+    log(f"DETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️")
     digit_path = IMG_PATH / digit_dir
 
     # For number and images in the witness images directory, run detection
     for i, img in enumerate(sorted(os.listdir(digit_path)), 1):
-        console(f"====> Processing {img} 🔍")
+        log(f"====> Processing {img} 🔍")
         run_vhs(
             weights=weights,
             source=digit_path / img,
@@ -123,7 +123,7 @@ def detect(manifest_url, model=None, callback=None):
 
         return f"Annotations from {anno_model} sent to {callback}/{digit_ref}"
     except Exception as e:
-        console(f'An error occurred', error=e)
+        log(f'An error occurred', "red", error=e)
 
 
 @celery.task
@@ -145,7 +145,7 @@ def test(model, dataset, save_dir):
         )
 
     except Exception as e:
-        console(f'An error occurred', error=e)
+        log(f'An error occurred', "red", error=e)
 
     try:
         if not os.path.exists(neg_output_dir):
@@ -157,7 +157,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model] Error: Failed to load image {image_path}", "red")
+                    log(f"[test_model] Error: Failed to load image {image_path}", "red")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
@@ -195,7 +195,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model] Error: Failed to load image {image_path}", "red")
+                    log(f"[test_model] Error: Failed to load image {image_path}", "red")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
@@ -230,7 +230,7 @@ def test(model, dataset, save_dir):
         return f"Annotations plotted on images and saved to {output_dir}"  #, no gt : {n}"
 
     except Exception as e:
-        console(f'An error occurred', error=e)
+        log(f'An error occurred', "red", error=e)
 
 
 @celery.task
@@ -247,7 +247,7 @@ def training(model, data, epochs):
         return f"Trained model {model} with {data} dataset."
 
     except Exception as e:
-        console(f'An error occurred', error=e)
+        log(f'An error occurred', "red", error=e)
 
 
 @celery.task
@@ -309,4 +309,4 @@ def similarity(documents, model=FEAT_NET, callback=None):
 
 @celery.task
 def test_celery(log_msg):
-    console(log_msg or ".dlrow olleH")
+    log(log_msg or ".dlrow olleH")

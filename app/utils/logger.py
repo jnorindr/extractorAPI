@@ -45,10 +45,6 @@ def console(msg="🚨🚨🚨", color="blue", error: Exception = None):
     # from celery import current_task, current_app
     # logger = current_task.logger if current_task else current_app.log.get_default_logger()
 
-    if not DEBUG:
-        log(msg)
-        return
-
     logger = logging.getLogger("exapi")
 
     # logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
@@ -69,7 +65,7 @@ def console(msg="🚨🚨🚨", color="blue", error: Exception = None):
         # logging.info(msg)
 
 
-def log(msg, color="blue"):
+def log(msg="🚨🚨🚨", color="blue", error: Exception = None):
     """
     Record an error message in the system log
     """
@@ -79,8 +75,14 @@ def log(msg, color="blue"):
         trace = ""
 
     # Create a logger instance
-    logger = logging.getLogger("django")
-    logger.error(f"\n{pprint(msg)}\n{trace}\n")
+    logger = logging.getLogger("exapi")
+
+    if error:
+        logger.error(f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{trace}\n", exc_info=error)
+    elif color == "yellow":
+        logger.warning(f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{trace}\n")
+    else:
+        logger.info(f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{trace}\n")
 
 
 def log_failed_img(img_name, img_url):
