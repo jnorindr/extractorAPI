@@ -3,6 +3,7 @@ from flask import request
 
 from app.app import app
 from app.similarity.const import FEAT_NET
+from app.utils.paths import ENV
 from app.utils.tasks import similarity
 from app.utils.security import key_required
 
@@ -26,9 +27,16 @@ def run_similarity():
     }
     Each document is compared to itself and other documents resulting in a list a comparison pairs
     """
-    documents = request.get_json().get('documents', {})  # dict of document ids with a URL containing a list of images
-    model = request.get_json().get('model', FEAT_NET) # which feature extraction backbone to use
-    callback = request.form.get('callback', None)  # which url to send back the similarity data
+
+    if not request.is_json:
+        return "Similarity task aborted!"
+
+    # dict of document ids with a URL containing a list of images
+    documents = request.get_json().get('documents', {})
+    # which feature extraction backbone to use
+    model = request.get_json().get('model', FEAT_NET)
+    # which url to send back the similarity data
+    callback = request.get_json().get('callback', f"{ENV.str('CLIENT_APP_URL')}/similarity")
 
     similarity.delay(documents, model, callback)
     return f"Similarity task triggered for {list(documents.keys())} with {model}!"

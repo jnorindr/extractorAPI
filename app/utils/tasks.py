@@ -37,9 +37,10 @@ def delete_images():
                 shutil.rmtree(dir_path, ignore_errors=False, onerror=None)
 
 
-def empty_log(log_file:str, two_weeks_ago):
-    if os.path.exists(log_file):
-        with open(log_file, 'r') as log_file:
+def empty_log(log_path:str, two_weeks_ago):
+    line_nb = 0
+    if os.path.exists(log_path):
+        with open(log_path, 'r') as log_file:
             lines = log_file.readlines()
 
         for line_nb, line in enumerate(lines):
@@ -50,8 +51,8 @@ def empty_log(log_file:str, two_weeks_ago):
             except ValueError:
                 pass  # Ignore lines without a date
 
-        with open(log_file, 'w') as file:
-            file.writelines(lines[line_nb:])
+        with open(log_path, 'w') as log_file:
+            log_file.writelines(lines[line_nb:])
 
 
 @celery.task
@@ -156,7 +157,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model] Error: Failed to load image {image_path}", "red")
+                    console(f"[test_model] Error: Failed to load image {image_path}", color="red")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
@@ -197,7 +198,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", "red")
+                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", color="red")
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -218,8 +219,7 @@ def test(model, dataset, save_dir):
                     cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
 
                     # Add the class labels to the bounding boxes
-                    cv2.putText(img, "ground truth", (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
-                                1)
+                    cv2.putText(img, "ground truth", (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
 
                 # Save the annotated image to the output folder
                 neg_output_path = os.path.join(neg_output_dir, image_file)
@@ -258,39 +258,48 @@ def similarity(documents, model=FEAT_NET, callback=None):
         "wit2_img2_anno2": "https://eida.obspm.fr/eida/wit2_img2_anno2/list/"
     }
     """
+    if len(list(documents.keys())) == 0:
+        console(f"[@celery.task.similarity] No documents to compare", color="red")
+
+    console(f"[@celery.task.similarity] Similarity task triggered for {list(documents.keys())} with {model}!")
 
     doc_ids = []
     for doc_id, url in documents.items():
+        console(f"[@celery.task.similarity] Processing {doc_id}...", color="cyan")
         doc_ids.append(doc_id)
-        # TODO check first if features were computed + use of model
-        if not is_downloaded(doc_id):
-            download_images(url, doc_id)
-            # TODO here compute features using model
+        try:
+            # TODO check first if features were computed + use of model
+            if not is_downloaded(doc_id):
+                console(f"[@celery.task.similarity] Downloading {doc_id} images...", color="cyan")
+                download_images(url, doc_id)
+                # TODO here compute features using model
+        except Exception as e:
+            console(f"[@celery.task.similarity] Unable to download images for {doc_id}", error=e)
+            return
 
-    npy_pairs = {}
     for doc_pair in doc_pairs(doc_ids):
         hashed_pair = hash_pair(doc_pair)
         score_file = SCORES_PATH / f"{hashed_pair}.npy"
         if not os.path.exists(score_file):
-            compute_seg_pairs(doc_pair, hashed_pair)
+            success = compute_seg_pairs(doc_pair, hashed_pair)
+            if not success:
+                console('[@celery.task.similarity] Error when computing scores', color="red")
+                return
 
-        npy_pairs[hashed_pair] = (f"{hashed_pair}.npy", open(score_file, 'rb'))
+        npy_pairs = {}
+        with open(score_file, 'rb') as file:
+            npy_pairs["-".join(sorted(doc_pair))] = (f"{'-'.join(sorted(doc_pair))}.npy", file.read())
 
-    #     # TODO compute total score on frontend platform
-    #     for img in get_imgs_in_dirs(get_doc_dirs(doc_pair)):
-    #         if img not in total_scores:
-    #             total_scores[img] = []
-    #         total_scores[img].extend(best_matches(seg_pairs, img, doc_pair))
-    #
-    # sorted_scores = {q_img: sorted(sim, key=lambda x: x[0], reverse=True) for q_img, sim in total_scores.items()}
+            try:
+                if callback:
+                    response = requests.post(
+                        url=f"{callback}",
+                        files=npy_pairs,
+                    )
+                    response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                console(f'[@celery.task.similarity] Error in callback request for {doc_pair}', error=e)
+            except Exception as e:
+                console(f'[@celery.task.similarity] An error occurred for {doc_pair}', error=e)
 
-    try:
-        if callback:
-            # f"{callback}/" if callback else f"{ENV.str('CLIENT_APP_URL')}/similarity"
-            requests.post(
-                url=f"{callback}",
-                files=npy_pairs,
-            )
-        return console(f"Successfully send scores for {doc_ids}")
-    except Exception as e:
-        console(f'An error occurred', error=e)
+    return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")

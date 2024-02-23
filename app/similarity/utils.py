@@ -24,6 +24,7 @@ def get_file_ext(filepath):
 def filename(filepath):
     return os.path.basename(filepath)
 
+
 def get_device():
     import torch
     return "cuda" if torch.cuda.is_available() else "cpu"
@@ -58,6 +59,7 @@ model_urls = {
     'hard_mining_neg5': "https://github.com/XiSHEN0220/SegSwap/raw/main/model/hard_mining_neg5.pth",
 }
 
+
 def download_models(model_name):
     os.makedirs(f"{MODEL_PATH}/", exist_ok=True)
 
@@ -91,7 +93,6 @@ def save_img(
     img_format="JPEG",
 ):
     try:
-        filename, _ = get_file_ext(img_filename)
         if img.mode != "RGB":
             img = img.convert("RGB")
 
@@ -106,7 +107,7 @@ def save_img(
         # tr_img = tr_(img).permute(1, 2, 0).numpy()
         # cv2.imwrite(query_img, tr_img)
 
-        img.save(img_path / f"{filename}.jpg", format=img_format)
+        img.save(f"{img_path}/{img_filename}.jpg", format=img_format)
         return img
     except Exception as e:
         console(f"Failed to save img as JPEG", error=e)
@@ -123,15 +124,18 @@ def hash_str(string):
     hash_object.update(string.encode('utf-8'))
     return hash_object.hexdigest()
 
+
 def hash_pair(pair: tuple):
     if isinstance(pair, tuple) and len(pair) == 2 and all(isinstance(s, str) for s in pair):
         return hash_str(''.join(sorted(pair)))
     raise ValueError("Not a correct pair of document id")
 
+
 def doc_pairs(doc_ids: list):
     if isinstance(doc_ids, list) and len(doc_ids) > 0:
         return list(combinations_with_replacement(doc_ids, 2))
     raise ValueError("Input must be a non-empty list of ids.")
+
 
 def download_img(img_url, doc_id, img_name):
     doc_dir = f"{DOC_PATH}/{doc_id}"
@@ -166,10 +170,9 @@ def download_images(url, doc_id):
     # z = len(str(len(images)))
     # i = 1
     paths = []
-    for img_name, img_url in images:
+    for img_name, img_url in images.items():
         # img_name = f"{i:0{z}}.jpg"
         # i += 1
-        print(f"{img_url} {img_name}")
         download_img(img_url, doc_id, img_name)
         paths.append(f"{DOC_PATH}/{doc_id}/{img_name}")
 
@@ -201,6 +204,8 @@ def is_downloaded(doc_id):
     path = f"{DOC_PATH}/{doc_id}/"
     if not os.path.exists(path):
         Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
+        return False
+    if len(os.listdir(path)) == 0:
         return False
     return True
 

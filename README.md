@@ -125,6 +125,7 @@ Run the app
 ```bash
 python run.py
 ```
+
 Or run everything at once:
 ```bash
 bash run.sh
