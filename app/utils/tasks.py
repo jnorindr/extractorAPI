@@ -54,11 +54,11 @@ def empty_log(log_path:str, two_weeks_ago):
             log_file.writelines(lines[line_nb:])
 
 
-@celery.task
-def empty_logs():
-    two_weeks_ago = datetime.now() - timedelta(weeks=2)
-    for log_file in [APP_LOG, CELERY_LOG, CELERY_ERROR_LOG]:
-        empty_log(log_file, two_weeks_ago)
+# @celery.task
+# def empty_logs():
+#     two_weeks_ago = datetime.now() - timedelta(weeks=2)
+#     for log_file in [APP_LOG, CELERY_LOG, CELERY_ERROR_LOG]:
+#         empty_log(log_file, two_weeks_ago)
 
 
 @celery.on_after_configure.connect
