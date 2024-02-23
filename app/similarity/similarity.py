@@ -24,8 +24,6 @@ def get_cos_pair(doc_pair, img1, img2):
     doc1, doc2 = doc_pair
     img1_dir, img2_dir = img1.split("/")[-2], img2.split("/")[-2]
 
-    print(img1_dir, doc1, img2_dir, doc2)
-
     if img1_dir == doc1 and img2_dir == doc2:
         return img1, img2
     elif img1_dir == doc2 and img2_dir == doc1:
@@ -68,7 +66,7 @@ def cosine_similarity(doc_pair):
         res = [1.0 if query_img == img_p else sim_score for img_p, sim_score in zip(img_paths, sim[i])]
         sorted_indices_by_res = np.argsort(res)[:-1][: COS_TOPK]  # [:-1] to remove the query image from its results
         sim_imgs = [img_paths[idx] for idx in sorted_indices_by_res]
-        # sim_pairs.extend([(query_img, sim_img) for sim_img in sim_imgs])
+
         sim_pairs.append([get_cos_pair(doc_pair, query_img, sim_img) for sim_img in sim_imgs])
         i += 1
 
@@ -95,13 +93,16 @@ def segswap_similarity(cos_pairs, output_file=None):
         [transforms.ToTensor(), transforms.Normalize(norm_mean, norm_std)]
     )
 
-    for p in tqdm(range(cos_pairs.shape[0])):
+    # for p in tqdm(range(cos_pairs.shape[0])):
+    for p in range(cos_pairs.shape[0]):
         # img_pairs = [(img1doc1, img1doc2), (img1doc1, img2doc2), ...] # pairs for img1doc1
         img_pairs = cos_pairs[p]
+
         if img_pairs[0, 0] is None:
-            break
+            # TODO here remove when features are computed per document
+            continue
+
         q_img = filename(img_pairs[0, 0])
-        # q_img = img_pairs[0, 0]
 
         qt_img = resize(Image.open(img_pairs[0, 0]).convert("RGB"))
         q_tensor = transformINet(qt_img).cuda()
@@ -111,7 +112,8 @@ def segswap_similarity(cos_pairs, output_file=None):
         tensor2 = []
         for s_img in sim_imgs[:SEG_TOPK]:
             if s_img is None:
-                break
+                # TODO here remove when features are computed per document
+                continue
             st_img = resize(Image.open(s_img).convert("RGB"))
             tensor1.append(q_tensor)  # NOTE: maybe not necessary to duplicate same img tensor
             tensor2.append(transformINet(st_img).cuda())
@@ -119,8 +121,12 @@ def segswap_similarity(cos_pairs, output_file=None):
         score = compute_score(torch.stack(tensor1), torch.stack(tensor2), backbone, encoder, y_grid, x_grid)
 
         for i in range(len(score)):
-            pair_score = np.array([[round(score[i], 5), q_img, filename(sim_imgs[i])]])
-            # pair_score = np.array([[round(score[i], 5), q_img, sim_imgs[i]]])
+            s_img = sim_imgs[i]
+            if s_img is None:
+                # TODO here remove when features are computed per document
+                continue
+
+            pair_score = np.array([[round(score[i], 5), q_img, filename(s_img)]])
             scores_npy = np.vstack([scores_npy, pair_score])
 
     if output_file:

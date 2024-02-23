@@ -270,6 +270,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
         try:
             # TODO check first if features were computed + use of model
             if not is_downloaded(doc_id):
+                console(f"[@celery.task.similarity] Downloading {doc_id} images...", color="cyan")
                 download_images(url, doc_id)
                 # TODO here compute features using model
         except Exception as e:
@@ -288,6 +289,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
         npy_pairs = {}
         with open(score_file, 'rb') as file:
             npy_pairs["-".join(sorted(doc_pair))] = (f"{'-'.join(sorted(doc_pair))}.npy", file.read())
+
             try:
                 if callback:
                     response = requests.post(

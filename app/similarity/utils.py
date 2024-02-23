@@ -24,6 +24,7 @@ def get_file_ext(filepath):
 def filename(filepath):
     return os.path.basename(filepath)
 
+
 def get_device():
     import torch
     return "cuda" if torch.cuda.is_available() else "cpu"
@@ -58,6 +59,7 @@ model_urls = {
     'hard_mining_neg5': "https://github.com/XiSHEN0220/SegSwap/raw/main/model/hard_mining_neg5.pth",
 }
 
+
 def download_models(model_name):
     os.makedirs(f"{MODEL_PATH}/", exist_ok=True)
 
@@ -91,7 +93,6 @@ def save_img(
     img_format="JPEG",
 ):
     try:
-        console(f"save_img: {img_filename}", color="yellow")
         if img.mode != "RGB":
             img = img.convert("RGB")
 
@@ -112,24 +113,29 @@ def save_img(
         console(f"Failed to save img as JPEG", error=e)
         return False
 
+
 def get_json(url):
     with urllib.request.urlopen(url) as url:
         return json.loads(url.read().decode())
+
 
 def hash_str(string):
     hash_object = hashlib.sha256()
     hash_object.update(string.encode('utf-8'))
     return hash_object.hexdigest()
 
+
 def hash_pair(pair: tuple):
     if isinstance(pair, tuple) and len(pair) == 2 and all(isinstance(s, str) for s in pair):
         return hash_str(''.join(sorted(pair)))
     raise ValueError("Not a correct pair of document id")
 
+
 def doc_pairs(doc_ids: list):
     if isinstance(doc_ids, list) and len(doc_ids) > 0:
         return list(combinations_with_replacement(doc_ids, 2))
     raise ValueError("Input must be a non-empty list of ids.")
+
 
 def download_img(img_url, doc_id, img_name):
     doc_dir = f"{DOC_PATH}/{doc_id}"
