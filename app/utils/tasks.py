@@ -305,3 +305,8 @@ def similarity(documents, model=FEAT_NET, callback=None):
                 console(f'[@celery.task.similarity] An error occurred for {doc_pair}', error=e)
 
     return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")
+
+
+@celery.task
+def test(log_msg):
+    console(log_msg or ".dlrow olleH")
