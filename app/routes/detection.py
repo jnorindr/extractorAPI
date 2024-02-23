@@ -5,7 +5,7 @@ from flask import request, jsonify
 from os.path import exists
 
 from app.app import app
-from app.utils.tasks import detect, test as test_celery
+from app.utils.tasks import detect, test_celery
 from app.utils.security import key_required
 from app.utils.paths import MANIFESTS_PATH, IMG_PATH, MODEL_PATH
 from app.iiif.iiif_downloader import IIIFDownloader

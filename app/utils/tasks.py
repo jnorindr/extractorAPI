@@ -308,5 +308,5 @@ def similarity(documents, model=FEAT_NET, callback=None):
 
 
 @celery.task
-def test(log_msg):
+def test_celery(log_msg):
     console(log_msg or ".dlrow olleH")

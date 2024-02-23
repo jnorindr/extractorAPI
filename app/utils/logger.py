@@ -3,9 +3,10 @@ import os
 import time
 import traceback
 
-from app.utils.paths import IMG_LOG
+from app.utils.paths import ENV, IMG_LOG
 from app.utils import pprint
 
+DEBUG = ENV.list("DEBUG")
 
 class TerminalColors:
     """
@@ -44,6 +45,10 @@ def console(msg="🚨🚨🚨", color="blue", error: Exception = None):
     # from celery import current_task, current_app
     # logger = current_task.logger if current_task else current_app.log.get_default_logger()
 
+    if not DEBUG:
+        log(msg)
+        return
+
     logger = logging.getLogger("exapi")
 
     # logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
@@ -62,6 +67,20 @@ def console(msg="🚨🚨🚨", color="blue", error: Exception = None):
     else:
         logger.info(msg)
         # logging.info(msg)
+
+
+def log(msg, color="blue"):
+    """
+    Record an error message in the system log
+    """
+    trace = traceback.format_exc()
+    if trace == "NoneType: None\n":
+        # trace = traceback.extract_stack(limit=10)
+        trace = ""
+
+    # Create a logger instance
+    logger = logging.getLogger("django")
+    logger.error(f"\n{pprint(msg)}\n{trace}\n")
 
 
 def log_failed_img(img_name, img_url):
