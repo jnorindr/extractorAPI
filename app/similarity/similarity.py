@@ -46,7 +46,8 @@ def cosine_similarity(doc_pair):
     # TODO Extract features in previous step
     features = extract_features(data_loader, device, FEAT_LAYER, FEAT_SET, FEAT_NET, hash_pair(doc_pair)).cpu().numpy()
     if not len(features):
-        print("Error when extracting features", color="red")
+        # console("Error when extracting features", color="red")
+        print("Error when extracting features")
         raise ValueError
 
     sim = pairwise.cosine_distances(features)
@@ -133,26 +134,32 @@ def segswap_similarity(cos_pairs, output_file=None):
         try:
             np.save(SCORES_PATH / f"{output_file}.npy", scores_npy)
         except Exception as e:
-            print(f"Failed to save {output_file}.npy", error=e)
+            # console(f"Failed to save {output_file}.npy", error=e)
+            print(f"Failed to save {output_file}.npy: {e}")
 
     return scores_npy
 
 
 def compute_seg_pairs(doc_pair, hashed_pair):
+    # console(f"COMPUTING SIMILARITY FOR {doc_pair} 🖇️")
     print(f"COMPUTING SIMILARITY FOR {doc_pair} 🖇️")
     try:
-        print(f"Computing cosine scores for {doc_pair} 🖇️", color="cyan")
+        # console(f"Computing cosine scores for {doc_pair} 🖇️", color="cyan")
+        print(f"Computing cosine scores for {doc_pair} 🖇️")
         cos_pairs = cosine_similarity(doc_pair)
         # Reshape to group pairs for same query img
         # cos_pairs = cos_pairs.reshape(-1, COS_TOPK, cos_pairs.shape[1])
     except Exception as e:
-        print(f"Error when computing cosine similarity", error=e)
+        # console(f"Error when computing cosine similarity", error=e)
+        print(f"Error when computing cosine similarity: {e}")
         return False
 
     try:
-        print(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
+        # console(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
+        print(f"Computing segswap scores for {doc_pair} 🖇️")
         segswap_similarity(cos_pairs, output_file=hashed_pair)
     except Exception as e:
-        print(f"Error when computing segswap scores", error=e)
+        # console(f"Error when computing segswap scores", error=e)
+        print(f"Error when computing segswap scores: {e}")
         return False
     return True
