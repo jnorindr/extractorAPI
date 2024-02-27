@@ -110,7 +110,7 @@ def save_img(
         img.save(f"{img_path}/{img_filename}.jpg", format=img_format)
         return img
     except Exception as e:
-        console(f"Failed to save img as JPEG", error=e)
+        print(f"Failed to save img as JPEG", error=e)
         return False
 
 
@@ -151,7 +151,7 @@ def download_img(img_url, doc_id, img_name):
             f"{doc_dir}/{img_name}",
         )
         log_failed_img(img_name, img_url)
-        console(f"[download_img] {img_url} is not a valid img file", error=e)
+        print(f"[download_img] {img_url} is not a valid img file", error=e)
 
 
 def download_images(url, doc_id):
