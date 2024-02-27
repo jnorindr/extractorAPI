@@ -68,10 +68,10 @@ def setup_periodic_tasks(sender, **kwargs):
         crontab(hour=2, minute=0),
         delete_images.s()
     )
-    sender.add_periodic_task(
-        crontab(hour=2, minute=0),
-        empty_log.s(),
-    )
+    # sender.add_periodic_task(
+    #     crontab(hour=2, minute=0),
+    #     empty_logs.s(),
+    # )
 
 
 @celery.task
