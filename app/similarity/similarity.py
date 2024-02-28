@@ -72,8 +72,8 @@ def cosine_similarity(doc_pair):
 
     np_pairs = np.array(sim_pairs)
 
-    # np_pairs = [[(img1doc1, img1doc2), (img1doc1, img2doc2), ...]
-    #             [(img2doc1, img4doc2), (img2doc1, img8doc2), ...]] # pairs for COS_TOPK similar images for each image
+    # np_pairs = [[(img1doc1, img1doc2), (img1doc1, img2doc2), ...]  # best matching images for img1doc1
+    #             [(img2doc1, img4doc2), (img2doc1, img8doc2), ...]] # best matching images for img2doc1
     return np_pairs
 
 
@@ -135,6 +135,11 @@ def segswap_similarity(cos_pairs, output_file=None):
         except Exception as e:
             console(f"Failed to save {output_file}.npy", error=e)
 
+    # scores_npy = [(score, img1doc1, img1doc2), # each cosine pair of image is given a score
+    #               (score, img1doc1, img2doc2),
+    #               (score, img2doc1, img4doc2),
+    #               (score, img2doc1, img8doc2),
+    #                ... ]
     return scores_npy
 
 
@@ -143,8 +148,6 @@ def compute_seg_pairs(doc_pair, hashed_pair):
     try:
         console(f"Computing cosine scores for {doc_pair} 🖇️", color="cyan")
         cos_pairs = cosine_similarity(doc_pair)
-        # Reshape to group pairs for same query img
-        # cos_pairs = cos_pairs.reshape(-1, COS_TOPK, cos_pairs.shape[1])
     except Exception as e:
         console(f"Error when computing cosine similarity", error=e)
         return False
