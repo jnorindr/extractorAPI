@@ -3,9 +3,10 @@ import os
 import time
 import traceback
 
-from app.utils.paths import IMG_LOG
+from app.utils.paths import ENV, IMG_LOG
 from app.utils import pprint
 
+DEBUG = ENV.list("DEBUG")
 
 class TerminalColors:
     """
@@ -55,6 +56,26 @@ def console(msg="🚨🚨🚨", color="blue", error: Exception = None):
     # else:
     #     logger.info(msg)
     print(msg)
+
+
+def log(msg="🚨🚨🚨", color="blue", error: Exception = None):
+    """
+    Record an error message in the system log
+    """
+    trace = traceback.format_exc()
+    if trace == "NoneType: None\n":
+        # trace = traceback.extract_stack(limit=10)
+        trace = ""
+
+    # Create a logger instance
+    logger = logging.getLogger("exapi")
+
+    if error:
+        logger.error(f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{trace}\n", exc_info=error)
+    elif color == "yellow":
+        logger.warning(f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{trace}\n")
+    else:
+        logger.info(f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{trace}\n")
 
 
 def log_failed_img(img_name, img_url):

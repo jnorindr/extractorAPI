@@ -15,9 +15,8 @@ from app.similarity.const import SCORES_PATH, FEAT_NET
 from app.similarity.similarity import compute_seg_pairs
 from app.similarity.utils import is_downloaded, download_images, doc_pairs, hash_pair
 from app.utils import sanitize_str
-from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH, APP_LOG, \
-    CELERY_LOG, CELERY_ERROR_LOG
-from app.utils.logger import console
+from app.utils.paths import ENV, IMG_PATH, ANNO_PATH, MODEL_PATH, DEFAULT_MODEL, DATA_PATH, DATASETS_PATH
+from app.utils.logger import console, log
 from app.iiif.iiif_downloader import IIIFDownloader
 from app.yolov5.detect_vhs import run_vhs
 from app.yolov5.detect import run as run_yolov5
@@ -55,11 +54,11 @@ def empty_log(log_path:str, two_weeks_ago):
             log_file.writelines(lines[line_nb:])
 
 
-@celery.task
-def empty_logs():
-    two_weeks_ago = datetime.now() - timedelta(weeks=2)
-    for log_file in [APP_LOG, CELERY_LOG, CELERY_ERROR_LOG]:
-        empty_log(log_file, two_weeks_ago)
+# @celery.task
+# def empty_logs():
+#     two_weeks_ago = datetime.now() - timedelta(weeks=2)
+#     for log_file in [APP_LOG, CELERY_LOG, CELERY_ERROR_LOG]:
+#         empty_log(log_file, two_weeks_ago)
 
 
 @celery.on_after_configure.connect
@@ -99,12 +98,12 @@ def detect(manifest_url, model=None, callback=None):
         # If annotations are generated again, empty annotation file
         open(anno_file, 'w').close()
 
-    console(f"DETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️")
+    print(f"DETECTING VISUAL ELEMENTS FOR {manifest_url} 🕵️")
     digit_path = IMG_PATH / digit_dir
 
     # For number and images in the witness images directory, run detection
     for i, img in enumerate(sorted(os.listdir(digit_path)), 1):
-        console(f"====> Processing {img} 🔍")
+        print(f"====> Processing {img} 🔍")
         run_vhs(
             weights=weights,
             source=digit_path / img,
@@ -122,9 +121,10 @@ def detect(manifest_url, model=None, callback=None):
             data={"model": f"{anno_model}_{time.strftime('%m_%Y', time.gmtime(os.path.getmtime(weights)))}"}
         )
 
-        return f"Annotations from {anno_model} sent to {callback}"
+        return f"Annotations from {anno_model} sent to {callback}/{digit_ref}"
     except Exception as e:
-        console(f'An error occurred', error=e)
+        # log(f'An error occurred', "red", error=e)
+        print(f'An error occurred: {e}')
 
 
 @celery.task
@@ -132,9 +132,10 @@ def test(model, dataset, save_dir):
     project = f"{DATASETS_PATH}/{dataset}/{save_dir}"
     name = "annotated_images_auto"
     annotated_img_dir = f"{project}/{name}/"
+    neg_img_dir = f"{project}/{name}/negatives/"
     annotations_dir = f"{DATASETS_PATH}/{dataset}/labels/test/"
     output_dir = f"{project}/comparative_images/"
-    neg_output_dir = f"{project}/comparative_images/false_negatives"
+    neg_output_dir = f"{project}/comparative_images/negatives"
 
     try:
         run_yolov5(
@@ -145,7 +146,8 @@ def test(model, dataset, save_dir):
         )
 
     except Exception as e:
-        console(f'An error occurred', error=e)
+        # log(f'An error occurred', "red", error=e)
+        print(f'An error occurred: {e}')
 
     try:
         if not os.path.exists(neg_output_dir):
@@ -157,7 +159,7 @@ def test(model, dataset, save_dir):
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model] Error: Failed to load image {image_path}", color="red")
+                    print(f"[test_model] Error: Failed to load image {image_path}", "red")
                     continue
 
                 annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
@@ -189,16 +191,19 @@ def test(model, dataset, save_dir):
                 output_path = os.path.join(output_dir, image_file)
                 cv2.imwrite(output_path, img)
 
-        for image_file in os.listdir(annotated_img_dir):
-            image_path = os.path.join(annotated_img_dir, image_file)
-            annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
-            annotation_path = os.path.join(annotations_dir, annotation_file)
-
-            if os.path.exists(annotation_path) and image_file not in os.listdir(output_dir):
+        for image_file in os.listdir(neg_img_dir):
+            if image_file.endswith(".jpg") or image_file.endswith(".JPG"):
+                image_path = os.path.join(neg_img_dir, image_file)
                 img = cv2.imread(image_path)
 
                 if img is None:
-                    console(f"[test_model_false_neg] Error: Failed to load image {image_path}", color="red")
+                    # log(f"[test_model] Error: Failed to load image {image_path}", "red")
+                    print(f"[test_model] Error: Failed to load image {image_path}")
+                    continue
+
+                annotation_file = image_file.replace(".jpg", ".txt").replace(".JPG", ".txt")
+                annotation_path = os.path.join(annotations_dir, annotation_file)
+                if not os.path.exists(annotation_path):
                     continue
 
                 with open(annotation_path, "r") as f:
@@ -219,7 +224,7 @@ def test(model, dataset, save_dir):
                     cv2.rectangle(img, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
 
                     # Add the class labels to the bounding boxes
-                    cv2.putText(img, "ground truth", (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
+                    cv2.putText(img, "Ground truth", (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 1)
 
                 # Save the annotated image to the output folder
                 neg_output_path = os.path.join(neg_output_dir, image_file)
@@ -228,7 +233,8 @@ def test(model, dataset, save_dir):
         return f"Annotations plotted on images and saved to {output_dir}"  #, no gt : {n}"
 
     except Exception as e:
-        console(f'An error occurred', error=e)
+        # log(f'An error occurred', "red", error=e)
+        print(f'An error occurred: {e}')
 
 
 @celery.task
@@ -245,7 +251,8 @@ def training(model, data, epochs):
         return f"Trained model {model} with {data} dataset."
 
     except Exception as e:
-        console(f'An error occurred', error=e)
+        # log(f'An error occurred', "red", error=e)
+        print(f'An error occurred for model {model} with dataset {data}: {e}')
 
 
 @celery.task
@@ -259,21 +266,26 @@ def similarity(documents, model=FEAT_NET, callback=None):
     }
     """
     if len(list(documents.keys())) == 0:
-        console(f"[@celery.task.similarity] No documents to compare", color="red")
+        # console(f"[@celery.task.similarity] No documents to compare", color="red")
+        print(f"[@celery.task.similarity] No documents to compare")
 
-    console(f"[@celery.task.similarity] Similarity task triggered for {list(documents.keys())} with {model}!")
+    # console(f"[@celery.task.similarity] Similarity task triggered for {list(documents.keys())} with {model}!")
+    print(f"[@celery.task.similarity] Similarity task triggered for {list(documents.keys())} with {model}!")
 
     doc_ids = []
     for doc_id, url in documents.items():
-        console(f"[@celery.task.similarity] Processing {doc_id}...", color="cyan")
+        # console(f"[@celery.task.similarity] Processing {doc_id}...", color="cyan")
+        print(f"[@celery.task.similarity] Processing {doc_id}...")
         doc_ids.append(doc_id)
         try:
             # TODO check first if features were computed + use of model
             if not is_downloaded(doc_id):
-                console(f"[@celery.task.similarity] Downloading {doc_id} images...", color="cyan")
+                # console(f"[@celery.task.similarity] Downloading {doc_id} images...", color="cyan")
+                print(f"[@celery.task.similarity] Downloading {doc_id} images...")
                 download_images(url, doc_id)
         except Exception as e:
-            console(f"[@celery.task.similarity] Unable to download images for {doc_id}", error=e)
+            # console(f"[@celery.task.similarity] Unable to download images for {doc_id}", error=e)
+            print(f"[@celery.task.similarity] Unable to download images for {doc_id}")
             return
 
     for doc_pair in doc_pairs(doc_ids):
@@ -282,7 +294,8 @@ def similarity(documents, model=FEAT_NET, callback=None):
         if not os.path.exists(score_file):
             success = compute_seg_pairs(doc_pair, hashed_pair)
             if not success:
-                console('[@celery.task.similarity] Error when computing scores', color="red")
+                # console('[@celery.task.similarity] Error when computing scores', color="red")
+                print('[@celery.task.similarity] Error when computing scores')
                 return
 
         npy_pairs = {}
@@ -297,8 +310,17 @@ def similarity(documents, model=FEAT_NET, callback=None):
                     )
                     response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                console(f'[@celery.task.similarity] Error in callback request for {doc_pair}', error=e)
+                # console(f'[@celery.task.similarity] Error in callback request for {doc_pair}', error=e)
+                print(f'[@celery.task.similarity] Error in callback request for {doc_pair}: {e}')
             except Exception as e:
-                console(f'[@celery.task.similarity] An error occurred for {doc_pair}', error=e)
+                # console(f'[@celery.task.similarity] An error occurred for {doc_pair}', error=e)
+                print(f'[@celery.task.similarity] An error occurred for {doc_pair}: {e}')
 
-    return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")
+    # return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")
+    return print(f"[@celery.task.similarity] Successfully send scores for {doc_ids}")
+
+
+@celery.task
+def test_celery(log_msg):
+    # log(log_msg or ".dlrow olleH")
+    print(log_msg or ".dlrow olleH")

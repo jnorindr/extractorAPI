@@ -145,6 +145,7 @@ def run(
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # im.jpg
+            neg_save_path = str(save_dir / 'negatives' / p.name)  # im.jpg
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
@@ -187,7 +188,12 @@ def run(
             # Save results (image with detections)
             if save_img:
                 if dataset.mode == 'image':
-                    cv2.imwrite(save_path, im0)
+                    if len(det):
+                        cv2.imwrite(save_path, im0)
+                    else:
+                        if not os.path.exists(f"{save_dir}/negatives"):
+                            os.makedirs(f"{save_dir}/negatives")
+                        cv2.imwrite(neg_save_path, im0)
                 else:  # 'video' or 'stream'
                     if vid_path[i] != save_path:  # new video
                         vid_path[i] = save_path

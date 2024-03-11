@@ -55,7 +55,8 @@ def get_doc_feat(doc_id):
 
     features = extract_features(data_loader, device, FEAT_LAYER, FEAT_SET, FEAT_NET, doc_id).cpu().numpy()
     if not len(features):
-        console("Error when extracting features", color="red")
+        # console("Error when extracting features", color="red")
+        print("Error when extracting features")
         raise ValueError
     return features, img_dataset.get_image_paths()
 
@@ -188,7 +189,8 @@ def segswap_similarity(cos_pairs, output_file=None):
         try:
             np.save(SCORES_PATH / f"{output_file}.npy", scores_npy)
         except Exception as e:
-            console(f"Failed to save {output_file}.npy", error=e)
+            # console(f"Failed to save {output_file}.npy", error=e)
+            print(f"Failed to save {output_file}.npy: {e}")
 
     # scores_npy = [(score, img1doc1, img1doc2), # each cosine pair of image is given a score
     #               (score, img1doc1, img2doc2),
@@ -199,18 +201,23 @@ def segswap_similarity(cos_pairs, output_file=None):
 
 
 def compute_seg_pairs(doc_pair, hashed_pair):
-    console(f"COMPUTING SIMILARITY FOR {doc_pair} 🖇️")
+    # console(f"COMPUTING SIMILARITY FOR {doc_pair} 🖇️")
+    print(f"COMPUTING SIMILARITY FOR {doc_pair} 🖇️")
     try:
-        console(f"Computing cosine scores for {doc_pair} 🖇️", color="cyan")
+        # console(f"Computing cosine scores for {doc_pair} 🖇️", color="cyan")
+        print(f"Computing cosine scores for {doc_pair} 🖇️")
         cos_pairs = cosine_similarity(doc_pair)
     except Exception as e:
-        console(f"Error when computing cosine similarity", error=e)
+        # console(f"Error when computing cosine similarity", error=e)
+        print(f"Error when computing cosine similarity: {e}")
         return False
 
     try:
-        console(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
+        # console(f"Computing segswap scores for {doc_pair} 🖇️", color="cyan")
+        print(f"Computing segswap scores for {doc_pair} 🖇️")
         segswap_similarity(cos_pairs, output_file=hashed_pair)
     except Exception as e:
-        console(f"Error when computing segswap scores", error=e)
+        # console(f"Error when computing segswap scores", error=e)
+        print(f"Error when computing segswap scores: {e}")
         return False
     return True
