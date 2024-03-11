@@ -14,15 +14,15 @@ from app.similarity.vit import VisionTransformer
 from app.utils.logger import console
 
 
-def extract_features(data_loader, device, feat_layer, feat_set, feat_net, hash_doc_pair):
+def extract_features(data_loader, device, feat_layer, feat_set, feat_net, doc_id):
     """
     feat_net ['resnet34', 'moco_v2_800ep_pretrain', 'dino_deitsmall16_pretrain', 'dino_vitbase8_pretrain']
     """
     torch.cuda.empty_cache()
     with torch.no_grad():
-        feat_path = f"{FEATS_PATH}/{hash_doc_pair}.pt"
+        feat_path = f"{FEATS_PATH}/{doc_id}.pt"
         if os.path.exists(feat_path):
-            console(f"Load already computed features {hash_doc_pair}", color="green")
+            console(f"Load already computed features {doc_id}", color="green")
             return torch.load(feat_path, map_location=device)
 
         model_path = get_model_path(feat_net)

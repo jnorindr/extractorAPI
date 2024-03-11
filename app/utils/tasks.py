@@ -272,7 +272,6 @@ def similarity(documents, model=FEAT_NET, callback=None):
             if not is_downloaded(doc_id):
                 console(f"[@celery.task.similarity] Downloading {doc_id} images...", color="cyan")
                 download_images(url, doc_id)
-                # TODO here compute features using model
         except Exception as e:
             console(f"[@celery.task.similarity] Unable to download images for {doc_id}", error=e)
             return
