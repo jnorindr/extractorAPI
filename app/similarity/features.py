@@ -14,22 +14,22 @@ from app.similarity.vit import VisionTransformer
 from app.utils.logger import console
 
 
-def extract_features(data_loader, device, feat_layer, feat_set, feat_net, hash_doc_pair):
+def extract_features(data_loader, device, feat_layer, feat_set, feat_net, doc_id):
     """
     feat_net ['resnet34', 'moco_v2_800ep_pretrain', 'dino_deitsmall16_pretrain', 'dino_vitbase8_pretrain']
     """
     torch.cuda.empty_cache()
     with torch.no_grad():
-        feat_path = f"{FEATS_PATH}/{hash_doc_pair}.pt"
+        feat_path = f"{FEATS_PATH}/{doc_id}.pt"
         if os.path.exists(feat_path):
-            # console(f"Load already computed features {hash_doc_pair}", color="green")
-            print(f"Load already computed features {hash_doc_pair}")
+            # console(f"Load already computed features {doc_id}", color="green")
+            print(f"Load already computed features {doc_id}")
             return torch.load(feat_path, map_location=device)
 
         model_path = get_model_path(feat_net)
         if feat_net == 'resnet34' and feat_set == 'imagenet':
             model = models.resnet34(weights=models.ResNet34_Weights.IMAGENET1K_V1).to(device)
-            model = create_feature_extractor(model, return_nodes={'layer3.5.bn2':'conv4', 'avgpool':'avgpool'})
+            model = create_feature_extractor(model, return_nodes={'layer3.5.bn2': 'conv4', 'avgpool': 'avgpool'})
 
         elif feat_net == 'moco_v2_800ep_pretrain' and feat_set == 'imagenet':
             model = models.resnet50().to(device)
@@ -58,7 +58,7 @@ def extract_features(data_loader, device, feat_layer, feat_set, feat_net, hash_d
         if 'dino' in feat_net:
             for i, imgs in enumerate(data_loader):
                 features.append(model(imgs).detach().cpu())
-        elif feat_layer  ==  'conv4':
+        elif feat_layer == 'conv4':
             for i, imgs in enumerate(data_loader):
                 features.append(model(imgs)['conv4'].detach().cpu().flatten(start_dim=1))
         else:
@@ -67,6 +67,7 @@ def extract_features(data_loader, device, feat_layer, feat_set, feat_net, hash_d
 
     features = torch.cat(features)
     torch.save(features, feat_path)
+
     return features
 
 

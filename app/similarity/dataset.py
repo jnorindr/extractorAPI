@@ -10,6 +10,7 @@ def img_id(img_path):
     img_name = img_path.split('/')[-1].split('.')[0]
     return img_name.lower().strip().replace("-", "").replace(",", "-")
 
+
 class IllusDataset(Dataset):
     def __init__(self, img_dirs, transform=None, device='cpu'):
         self.transform = transform
@@ -32,8 +33,8 @@ class IllusDataset(Dataset):
         return get_imgs_in_dirs(self.img_dirs)
 
     def get_image_paths(self):
-        img_ids = [img_id(path) for path in self.data_paths]
-        return self.data_paths, img_ids
+        # img_ids = [img_id(path) for path in self.data_paths]
+        return self.data_paths  #, img_ids
 
     def apply_transform(self, img):
         transforms_ = []

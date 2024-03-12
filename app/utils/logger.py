@@ -42,27 +42,20 @@ def get_color(color=None):
 
 
 def console(msg="🚨🚨🚨", color="blue", error: Exception = None):
-    # from celery import current_task, current_app
-    # logger = current_task.logger if current_task else current_app.log.get_default_logger()
-
     logger = logging.getLogger("exapi")
 
-    # logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
     if error:
         color = "red"
     stack_trace = f"\nStack Trace:\n{get_color(color)}{traceback.format_exc()}{TerminalColors.end}\n" if error else ""
-
     msg = f"\n\n[{get_time()}]\n{get_color(color)}{TerminalColors.bold}{pprint(msg)}{TerminalColors.end}\n{stack_trace}"
 
-    if error:
-        logger.error(msg, exc_info=error)
-        # logging.error(msg, exc_info=error)
-    elif color == "yellow":
-        logger.warning(msg)
-        # logging.warning(msg)
-    else:
-        logger.info(msg)
-        # logging.info(msg)
+    # if error:
+    #     logger.error(msg, exc_info=error)
+    # elif color == "yellow":
+    #     logger.warning(msg)
+    # else:
+    #     logger.info(msg)
+    print(msg)
 
 
 def log(msg="🚨🚨🚨", color="blue", error: Exception = None):
