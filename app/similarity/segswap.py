@@ -43,8 +43,9 @@ Mostly copy-paste from https://github.com/XiSHEN0220/SegSwap
 }
 """
 
-### --- Positional encoding--- ###
-### --- Borrowed from Detr--- ###
+# --- Positional encoding--- #
+# --- Borrowed from Detr--- #
+
 
 def consistent_mask(m1, m2, o1, o2):
     """
@@ -83,7 +84,7 @@ def resize(img: Image, img_size=MAX_SIZE, stride=SEG_STRIDE):
 
     new_w = int(round(w / ratio / stride)) * stride
     new_h = int(round(h / ratio / stride)) * stride
-    return img.resize((new_w, new_h), resample=2)
+    return img.resize((MAX_SIZE, MAX_SIZE), resample=2)  # img.resize((new_w, new_h), resample=2)
 
 
 def score_local_feat_match(feat1, x1, y1, feat2, x2, y2, weight_feat):
@@ -103,12 +104,13 @@ def score_local_feat_match(feat1, x1, y1, feat2, x2, y2, weight_feat):
 
         feat_1_bag = torch.stack(feat_1_bag)
         feat_2_bag = torch.stack(feat_2_bag)
-        ## each local feature is matched to  its feature in another image, finally the similarity is weighted by the mask prediction
+        # each local feature is matched to its feature in another image,
+        # finally the similarity is weighted by the mask prediction
         score_weight_feat = torch.sum(feat_1_bag * feat_2_bag, dim=2) * weight_feat
 
-        ## if (x1i, y1i) --> (x2, y2)
-        ## and (x1j, y1j) --> (x2, y2)
-        ## pick the best match
+        # if (x1i, y1i) --> (x2, y2)
+        # and (x1j, y1j) --> (x2, y2)
+        # pick the best match
         scores = []
         for j in range(feat1.shape[0]):
             dict_score = {

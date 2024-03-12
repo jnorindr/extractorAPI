@@ -65,11 +65,14 @@ def doc_sim_pairs(sim_scores, query_doc, sim_doc, is_doc_1=True):
     sim_pairs = []
     tr_ = transforms.Resize((224, 224))
     for i, query_img in enumerate(query_doc):
-        # # TODO is it necessary to perform those operations
+        # # TODO is it necessary to perform those operations?
         img = cv2.imread(query_img)
         img = torch.from_numpy(img).permute(2, 0, 1)
         tr_img = tr_(img).permute(1, 2, 0).numpy()
         cv2.imwrite(query_img, tr_img)
+
+        # Add way to remove query_img from its results
+        # res = [1.0 if query_img == img_p else sim_score for img_p, sim_score in zip(img_paths, sim[i])]
 
         query_scores = sim_scores[:][i] if is_doc_1 else sim_scores[i, :]
         top_indices = query_scores.argsort()[-COS_TOPK:][::-1]  # -COS_TOPK + 1 : -1 to remove the comparison to itself
@@ -160,21 +163,18 @@ def segswap_similarity(cos_pairs, output_file=None):
         q_tensor = transformINet(qt_img).cuda()
         sim_imgs = img_pairs[:, 1]
 
-        tensor1 = []
+        # tensor1 = []
+        tensor1 = [q_tensor] * len(sim_imgs)
         tensor2 = []
         for s_img in sim_imgs:  # sim_imgs[:SEG_TOPK]
             st_img = resize(Image.open(s_img).convert("RGB"))
-            tensor1.append(q_tensor)  # NOTE: maybe not necessary to duplicate same img tensor
+            # tensor1.append(q_tensor)  # NOTE: maybe not necessary to duplicate same img tensor
             tensor2.append(transformINet(st_img).cuda())
 
         score = compute_score(torch.stack(tensor1), torch.stack(tensor2), backbone, encoder, y_grid, x_grid)
 
         for i in range(len(score)):
             s_img = sim_imgs[i]
-            if s_img is None:
-                # TODO here remove when features are computed per document
-                continue
-
             pair_score = np.array([[round(score[i], 5), q_img, filename(s_img)]])
             scores_npy = np.vstack([scores_npy, pair_score])
 
