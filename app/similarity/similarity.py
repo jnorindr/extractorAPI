@@ -63,13 +63,13 @@ def get_doc_feat(doc_id):
 
 def doc_sim_pairs(sim_scores, query_doc, sim_doc, is_doc_1=True):
     sim_pairs = []
-    # tr_ = transforms.Resize((224, 224))
+    tr_ = transforms.Resize((224, 224))
     for i, query_img in enumerate(query_doc):
         # # TODO is it necessary to perform those operations
-        # img = cv2.imread(query_img)
-        # img = torch.from_numpy(img).permute(2, 0, 1)
-        # tr_img = tr_(img).permute(1, 2, 0).numpy()
-        # cv2.imwrite(query_img, tr_img)
+        img = cv2.imread(query_img)
+        img = torch.from_numpy(img).permute(2, 0, 1)
+        tr_img = tr_(img).permute(1, 2, 0).numpy()
+        cv2.imwrite(query_img, tr_img)
 
         query_scores = sim_scores[:][i] if is_doc_1 else sim_scores[i, :]
         top_indices = query_scores.argsort()[-COS_TOPK:][::-1]  # -COS_TOPK + 1 : -1 to remove the comparison to itself
@@ -86,7 +86,8 @@ def cosine_similarity(doc_pair):
     doc2_feat, doc2_imgs = get_doc_feat(doc_pair[1])
 
     sim = cos_sim(doc1_feat, doc2_feat)  # sim has shape (n_img_doc1, n_img_doc2)
-    sim_pairs = doc_sim_pairs(sim, doc1_imgs, doc2_imgs, True)
+    sim_pairs = doc_sim_pairs(sim, doc1_imgs, doc2_imgs)
+    # We assume that all the best matching images of doc2 in doc1 are already contained in
     # sim_pairs += doc_sim_pairs(sim, doc2_imgs, doc1_imgs, False)
 
     # img_dataset = IllusDataset(
@@ -149,15 +150,10 @@ def segswap_similarity(cos_pairs, output_file=None):
         [transforms.ToTensor(), transforms.Normalize(norm_mean, norm_std)]
     )
 
-    # for p in tqdm(range(cos_pairs.shape[0])):
-    for p in range(cos_pairs.shape[0]):
-        # img_pairs = [(img1doc1, img1doc2), (img1doc1, img2doc2), ...] # pairs for img1doc1
-        img_pairs = cos_pairs[p]
-
-        if img_pairs[0, 0] is None:
-            # TODO here remove when features are computed per document
-            continue
-
+    # img_pairs = [(img1doc1, img1doc2), (img1doc1, img2doc2), ...] # pairs for img1doc1
+    for img_pairs in cos_pairs:
+    # for p in range(cos_pairs.shape[0]):
+        # img_pairs = cos_pairs[p]
         q_img = filename(img_pairs[0, 0])
 
         qt_img = resize(Image.open(img_pairs[0, 0]).convert("RGB"))
@@ -166,10 +162,7 @@ def segswap_similarity(cos_pairs, output_file=None):
 
         tensor1 = []
         tensor2 = []
-        for s_img in sim_imgs[:SEG_TOPK]:
-            if s_img is None:
-                # TODO here remove when features are computed per document
-                continue
+        for s_img in sim_imgs:  # sim_imgs[:SEG_TOPK]
             st_img = resize(Image.open(s_img).convert("RGB"))
             tensor1.append(q_tensor)  # NOTE: maybe not necessary to duplicate same img tensor
             tensor2.append(transformINet(st_img).cuda())
