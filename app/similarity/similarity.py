@@ -71,10 +71,10 @@ def doc_sim_pairs(sim_scores, query_doc, sim_doc, is_doc_1=True):
         tr_img = tr_(img).permute(1, 2, 0).numpy()
         cv2.imwrite(query_img, tr_img)
 
-        # Add way to remove query_img from its results
-        # res = [1.0 if query_img == img_p else sim_score for img_p, sim_score in zip(img_paths, sim[i])]
-
         query_scores = sim_scores[:][i] if is_doc_1 else sim_scores[i, :]
+        # set 0 as similarity score for the query image to itself
+        query_scores = [0.0 if query_img == sim_img else img_score for sim_img, img_score in zip(query_doc, query_scores)]
+
         top_indices = query_scores.argsort()[-COS_TOPK:][::-1]  # -COS_TOPK + 1 : -1 to remove the comparison to itself
         sim_pairs.append([
             (query_img, sim_doc[j]) if is_doc_1 else (sim_doc[j], query_img)
