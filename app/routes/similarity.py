@@ -10,7 +10,7 @@ from app.utils.security import key_required
 
 @app.route("/run_similarity", methods=['POST'])
 @key_required
-def run_similarity():
+def run_similarity(app_name):
     """
     documents = {
         "wit3_man186_anno181": "https://eida.obspm.fr/eida/wit3_man186_anno181/list/",
@@ -38,13 +38,13 @@ def run_similarity():
     # which url to send back the similarity data
     callback = request.get_json().get('callback', f"{ENV.str('CLIENT_APP_URL')}/similarity")
 
-    similarity.delay(documents, model, callback)
+    similarity.delay(documents, app_name, model, callback)
     return f"Similarity task triggered for {list(documents.keys())} with {model}!"
 
 
 @app.route('/delete_similarity', methods=['POST'])
 @key_required
-def delete_similarity():
+def delete_similarity(app_name):
     """
     Delete features and pairs of scores related to a given document
     """

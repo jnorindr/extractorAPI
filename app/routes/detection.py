@@ -13,7 +13,7 @@ from app.iiif.iiif_downloader import IIIFDownloader
 
 @app.route("/run_detect", methods=['POST'])
 @key_required
-def run_detect():
+def run_detect(app_name):
     """
     To download images from a IIIF manifest and launch detection
     """
@@ -29,7 +29,7 @@ def run_detect():
 
 @app.route('/detect_all', methods=['POST'])
 @key_required
-def detect_all():
+def detect_all(app_name):
     """
     To download images from a list of IIIF manifest and launch detection
     """
@@ -57,7 +57,7 @@ def detect_all():
 
 @app.route('/delete_detect', methods=['POST'])
 @key_required
-def delete_detect():
+def delete_detect(app_name):
     """
     To delete images for a witness and relaunch detection
     """

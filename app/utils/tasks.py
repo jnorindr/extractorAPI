@@ -256,7 +256,7 @@ def training(model, data, epochs):
 
 
 @celery.task
-def similarity(documents, model=FEAT_NET, callback=None):
+def similarity(documents, app_name, model=FEAT_NET, callback=None):
     """
     E.g.
     "documents": {
@@ -274,6 +274,7 @@ def similarity(documents, model=FEAT_NET, callback=None):
 
     doc_ids = []
     for doc_id, url in documents.items():
+        doc_id = f"{app_name}_{doc_id}"
         # console(f"[@celery.task.similarity] Processing {doc_id}...", color="cyan")
         print(f"[@celery.task.similarity] Processing {doc_id}...")
         doc_ids.append(doc_id)
@@ -288,8 +289,10 @@ def similarity(documents, model=FEAT_NET, callback=None):
             print(f"[@celery.task.similarity] Unable to download images for {doc_id}")
             return
 
+    hashed_pairs = []
     for doc_pair in doc_pairs(doc_ids):
         hashed_pair = hash_pair(doc_pair)
+        hashed_pairs.append(hashed_pair)
         score_file = SCORES_PATH / f"{hashed_pair}.npy"
         if not os.path.exists(score_file):
             success = compute_seg_pairs(doc_pair, hashed_pair)
@@ -317,7 +320,8 @@ def similarity(documents, model=FEAT_NET, callback=None):
                 print(f'[@celery.task.similarity] An error occurred for {doc_pair}: {e}')
 
     # return console(f"[@celery.task.similarity] Successfully send scores for {doc_ids}", color="green")
-    return print(f"[@celery.task.similarity] Successfully send scores for {doc_ids}")
+    print(f"[@celery.task.similarity] Successfully send scores for {doc_ids}")
+    return f"Successfully computed scores files {hashed_pairs}!"
 
 
 @celery.task
