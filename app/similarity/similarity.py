@@ -122,6 +122,14 @@ def segswap_similarity(cos_pairs, output_file=None):
         [transforms.ToTensor(), transforms.Normalize(norm_mean, norm_std)]
     )
 
+    """
+    first_imgs = cos_pairs[:, 0]
+    # get a unique list of all the first img in pairs of cosine similar images
+    query_imgs = np.unique(first_imgs)
+    for q_img in query_imgs:
+        img_pairs = cos_pairs(np.char.startswith(first_imgs, q_img))
+    """
+
     # img_pairs = [(img1doc1, img1doc2), (img1doc1, img2doc2), ...] # pairs for img1doc1
     for img_pairs in cos_pairs:
         q_img = filename(img_pairs[0, 0])
