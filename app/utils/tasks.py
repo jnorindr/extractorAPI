@@ -303,6 +303,8 @@ def similarity(documents, app_name, model=FEAT_NET, callback=None):
 
         npy_pairs = {}
         with open(score_file, 'rb') as file:
+            # Remove app prefix from file name
+            doc_pair = ("_".join(doc_pair[0].split("_")[1:]), "_".join(doc_pair[1].split("_")[1:]))
             npy_pairs["-".join(sorted(doc_pair))] = (f"{'-'.join(sorted(doc_pair))}.npy", file.read())
 
             try:
