@@ -75,7 +75,7 @@ def doc_sim_pairs(sim_scores, query_doc, sim_doc, is_doc_1=True):
         # set 0 as similarity score for the query image to itself
         query_scores = [0.0 if query_img == sim_img else img_score for sim_img, img_score in zip(query_doc, query_scores)]
 
-        top_indices = np.argsort(query_scores)[-COS_TOPK:][::-1]  # -COS_TOPK + 1 : -1 to remove the comparison to itself
+        top_indices = np.argsort(query_scores)[-COS_TOPK:][::-1]
         sim_pairs.append([
             (query_img, sim_doc[j]) if is_doc_1 else (sim_doc[j], query_img)
             for j in top_indices
@@ -90,47 +90,16 @@ def cosine_similarity(doc_pair):
 
     sim = cos_sim(doc1_feat, doc2_feat)  # sim has shape (n_img_doc1, n_img_doc2)
     sim_pairs = doc_sim_pairs(sim, doc1_imgs, doc2_imgs)
-    # We assume that all the best matching images of doc2 in doc1 are already contained in
-    # sim_pairs += doc_sim_pairs(sim, doc2_imgs, doc1_imgs, False)
-
-    # img_dataset = IllusDataset(
-    #     img_dirs=get_doc_dirs(doc_pair),
-    #     transform=['resize', 'normalize'],
-    #     device=get_device()
-    # )
-    #
-    # device = get_device()
-    # data_loader = DataLoader(img_dataset, batch_size=128, shuffle=False)
-    #
-    # # TODO Extract features in previous step
-    # features = extract_features(data_loader, device, FEAT_LAYER, FEAT_SET, FEAT_NET, hash_pair(doc_pair)).cpu().numpy()
-    # if not len(features):
-    #     # console("Error when extracting features", color="red")
-    #     print("Error when extracting features")
-    #     raise ValueError
-    #
-    # sim = pairwise.cosine_distances(features)
-    #
-    # img_paths, _ = img_dataset.get_image_paths()
-    # sim_pairs = []
-    #
-    # tr_ = transforms.Resize((224, 224))
-    # i = 0
-    # for query_img in img_paths:
-    #     # TODO maybe resize directly inside save_img()
-    #     img = cv2.imread(query_img)
-    #     img = torch.from_numpy(img).permute(2, 0, 1)
-    #     tr_img = tr_(img).permute(1, 2, 0).numpy()
-    #     cv2.imwrite(query_img, tr_img)
-    #
-    #     res = [1.0 if query_img == img_p else sim_score for img_p, sim_score in zip(img_paths, sim[i])]
-    #     sorted_indices_by_res = np.argsort(res)[:-1][: COS_TOPK]  # [:-1] to remove the query image from its results
-    #     sim_imgs = [img_paths[idx] for idx in sorted_indices_by_res]
-    #
-    #     sim_pairs.append([get_cos_pair(doc_pair, query_img, sim_img) for sim_img in sim_imgs])
-    #     i += 1
-
     np_pairs = np.array(sim_pairs)
+
+    """
+    # If we don't assume that all the best matching images of doc2 in doc1
+    # are already contained in best matching images of doc1 in doc2
+    sim_pairs += doc_sim_pairs(sim, doc2_imgs, doc1_imgs, False)
+
+    # Remove duplicates pairs with list(set())
+    np_pairs = np.array(list(set(sim_pairs)))
+    """
 
     # np_pairs = [[(img1doc1, img1doc2), (img1doc1, img2doc2), ...]  # best matching images for img1doc1
     #             [(img2doc1, img4doc2), (img2doc1, img8doc2), ...]] # best matching images for img2doc1
@@ -153,10 +122,16 @@ def segswap_similarity(cos_pairs, output_file=None):
         [transforms.ToTensor(), transforms.Normalize(norm_mean, norm_std)]
     )
 
+    """
+    first_imgs = cos_pairs[:, 0]
+    # get a unique list of all the first img in pairs of cosine similar images
+    query_imgs = np.unique(first_imgs)
+    for q_img in query_imgs:
+        img_pairs = cos_pairs(np.char.startswith(first_imgs, q_img))
+    """
+
     # img_pairs = [(img1doc1, img1doc2), (img1doc1, img2doc2), ...] # pairs for img1doc1
     for img_pairs in cos_pairs:
-    # for p in range(cos_pairs.shape[0]):
-        # img_pairs = cos_pairs[p]
         q_img = filename(img_pairs[0, 0])
 
         qt_img = resize(Image.open(img_pairs[0, 0]).convert("RGB"))

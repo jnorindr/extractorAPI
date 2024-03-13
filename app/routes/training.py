@@ -12,7 +12,7 @@ from app.utils.paths import DATA_PATH, DATASETS_PATH
 
 @app.route('/send-data', methods=['POST'])
 @key_required
-def send_data():
+def send_data(app_name):
     img_zip = request.files['img_zip']
     anno_zip = request.files['anno_zip']
     yaml_file = request.files['yaml_file']
@@ -66,7 +66,7 @@ def send_data():
 
 @app.route('/send-dataset', methods=['POST'])
 @key_required
-def send_dataset():
+def send_dataset(app_name):
     dataset_zip = request.files['dataset_zip']
     yaml_file = request.files['yaml_file']
 
@@ -90,7 +90,7 @@ def send_dataset():
 
 @app.route('/test-model', methods=['POST'])
 @key_required
-def test_model():
+def test_model(app_name):
     model = request.form.get('model')
     dataset = request.form.get('dataset')
     save_dir = request.form.get('save_dir')
@@ -101,7 +101,7 @@ def test_model():
 
 @app.route('/train-model', methods=['POST'])
 @key_required
-def train_model():
+def train_model(app_name):
     model = request.form.get('model')
     data = request.form.get('data')
     epochs = request.form.get('epochs')
