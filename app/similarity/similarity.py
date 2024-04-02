@@ -54,9 +54,9 @@ def get_doc_feat(doc_id):
     data_loader = DataLoader(img_dataset, batch_size=128, shuffle=False)
 
     features = extract_features(data_loader, device, FEAT_LAYER, FEAT_SET, FEAT_NET, doc_id).cpu().numpy()
-    if not len(features):
-        # console("Error when extracting features", color="red")
-        print("Error when extracting features")
+    if not len(features) or not features or type(features) is not np.ndarray:
+        # console("[get_doc_feat] Error when extracting features: feature tensor is empty.", color="red")
+        print("[get_doc_feat] Error when extracting features: feature tensor is empty.")
         raise ValueError
     return features, img_dataset.get_image_paths()
 

@@ -154,6 +154,14 @@ def download_img(img_url, doc_id, img_name):
         log_failed_img(img_name, img_url)
         # console(f"[download_img] {img_url} is not a valid img file", error=e)
         print(f"[download_img] {img_url} is not a valid img file: {e}")
+    except Exception as e:
+        shutil.copyfile(
+            f"{DOC_PATH}/placeholder.jpg",
+            f"{doc_dir}/{img_name}",
+        )
+        log_failed_img(img_name, img_url)
+        # console(f"[download_img] {img_url} image was not downloaded", error=e)
+        print(f"[download_img] {img_url} image was not downloaded: {e}")
 
 
 def download_images(url, doc_id):
