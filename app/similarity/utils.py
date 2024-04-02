@@ -71,7 +71,8 @@ def download_models(model_name):
         with open(f"{MODEL_PATH}/{model_name}.pth", 'wb') as file:
             file.write(response.content)
         return
-    print(f"Failed to download the file. Status code: {response.status_code}")
+    console(f"[download_models] Failed to download the file. Status code: {response.status_code}")
+    # print(f"Failed to download the file. Status code: {response.status_code}")
 
 
 def get_model_path(model_name):
@@ -110,8 +111,8 @@ def save_img(
         img.save(f"{img_path}/{img_filename}.jpg", format=img_format)
         return img
     except Exception as e:
-        # console(f"Failed to save img as JPEG", error=e)
-        print(f"Failed to save img as JPEG: {e}")
+        console(f"Failed to save img as JPEG", error=e)
+        # print(f"Failed to save img as JPEG: {e}")
         return False
 
 
@@ -152,16 +153,16 @@ def download_img(img_url, doc_id, img_name):
             f"{doc_dir}/{img_name}",
         )
         log_failed_img(img_name, img_url)
-        # console(f"[download_img] {img_url} is not a valid img file", error=e)
-        print(f"[download_img] {img_url} is not a valid img file: {e}")
+        console(f"[download_img] {img_url} is not a valid img file", error=e)
+        # print(f"[download_img] {img_url} is not a valid img file: {e}")
     except Exception as e:
         shutil.copyfile(
             f"{DOC_PATH}/placeholder.jpg",
             f"{doc_dir}/{img_name}",
         )
         log_failed_img(img_name, img_url)
-        # console(f"[download_img] {img_url} image was not downloaded", error=e)
-        print(f"[download_img] {img_url} image was not downloaded: {e}")
+        console(f"[download_img] {img_url} image was not downloaded", error=e)
+        # print(f"[download_img] {img_url} image was not downloaded: {e}")
 
 
 def download_images(url, doc_id):

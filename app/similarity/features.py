@@ -22,8 +22,8 @@ def extract_features(data_loader, device, feat_layer, feat_set, feat_net, doc_id
     with torch.no_grad():
         feat_path = f"{FEATS_PATH}/{doc_id}.pt"
         if os.path.exists(feat_path):
-            # console(f"Load already computed features {doc_id}", color="green")
-            print(f"Load already computed features {doc_id}")
+            console(f"Load already computed features {doc_id}", color="green")
+            # print(f"Load already computed features {doc_id}")
             return torch.load(feat_path, map_location=device)
 
         model_path = get_model_path(feat_net)
